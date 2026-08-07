@@ -9,22 +9,11 @@ public partial class MapInteraction : TileMapLayer
 
     //  设置鼠标左键按下的状态和按下的时间，用于区分点击和长按
     //  TODO: 抽象出一个 MouseInput 类，专门处理鼠标输入相关的逻辑
-    public bool IsMouseLeftHolding { get; set; } = false;
-    public double MouseLeftHoldingTime { get; set; }
-
-    private Label mouseClickTimeShower;
+    
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        mouseClickTimeShower = GetNode<Label>("MouseClickTimeShower");
-        if (mouseClickTimeShower == null)
-        {
-            GD.PrintErr("没有找到 MouseClickTimeShower 节点！");
-        }
-        else
-        {
-            mouseClickTimeShower.Text = "找到MouseClickTimeShower 节点！";
-        }
+        
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -34,32 +23,10 @@ public partial class MapInteraction : TileMapLayer
         //  获取当前鼠标在网格中的坐标
         Vector2 localMousePosition = GetLocalMousePosition();
         Vector2I currentCellMousePosition = LocalToMap(localMousePosition);
-        GD.Print($"当前鼠标所在的坐标：{localMousePosition}");
+        //GD.Print($"当前鼠标所在的坐标：{localMousePosition}");
 
         //  获取当前鼠标点击的按钮，返回值是一个 long 类型的整数，表示鼠标按钮的掩码，1表示左键，2表示右键，4表示中键，8表示第四个按钮，16表示第五个按钮，以此类推
-        long clickedMouseButton = (long)(Input.GetMouseButtonMask());
-        if (clickedMouseButton == 1)
-        {
-            if (!IsMouseLeftHolding)
-            {
-                IsMouseLeftHolding = true;
-                MouseLeftHoldingTime = 0;
-            }
-            else
-            {
-                MouseLeftHoldingTime += delta;
-            }
-        }
-        else
-        {
-            if (IsMouseLeftHolding)
-            {
-                IsMouseLeftHolding = false;
-                MouseLeftHoldingTime = 0;
-            }
-        }
-
-        mouseClickTimeShower.Text = $"鼠标左键按下时间：{MouseLeftHoldingTime:F2} 秒";
+        
 
         //GD.Print($"当前鼠标所在的坐标：{currentCellMousePosition}，当前鼠标点击的按钮掩码：{clickedMouseButton}");
 
@@ -69,7 +36,7 @@ public partial class MapInteraction : TileMapLayer
         {
 
             //  判断鼠标是否点击了左键，如果是则调用 ClickCell 方法
-            if (clickedMouseButton == 1 && MouseLeftHoldingTime <= 0.01)
+            if (MouseManager.Instance.ClickedMouseButton == 1 && MouseManager.Instance.MouseLeftHoldingTime <= 0.01)
             {
                 ClickCell(currentCellMousePosition);
             }

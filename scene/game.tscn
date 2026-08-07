@@ -51,7 +51,7 @@ tile_map_data = PackedByteArray("AAAHAAkAAgABAAAAAAALAAkAAgABAAAAAAAIAA0AAgABAAA
 tile_set = SubResource("TileSet_534od")
 script = ExtResource("3_33cqm")
 
-[node name="MouseClickTimeShower" type="Label" parent="MapInteraction" unique_id=2131793230]
+[node name="MouseClickTimeShower" type="Label" parent="." unique_id=2131793230]
 offset_left = 40.0
 offset_top = 64.0
 offset_right = 216.0

@@ -4,6 +4,7 @@ using System;
 public partial class Camera2d : Camera2D
 {
     public Vector2 preciousMousePosition { get; set; }
+    [Export] public float zoomSpeed { get; set; } = 1.0f;
 
 
     // Called when the node enters the scene tree for the first time.
@@ -25,8 +26,8 @@ public partial class Camera2d : Camera2D
         if (clickedMouseButton == 4)
         {
             Vector2 offset = Offset;
-            offset.X -= deltaX;
-            offset.Y -= deltaY;
+            offset.X -= zoomSpeed * deltaX;
+            offset.Y -= zoomSpeed * deltaY;
             Offset = offset;
         }
 
