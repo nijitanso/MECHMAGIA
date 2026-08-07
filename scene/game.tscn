@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://t4nouivmyg4d" path="res://resource/HoverHighlight.png" id="2_dbls1"]
 [ext_resource type="Script" uid="uid://q424eifra8qk" path="res://scene/MapInteraction.cs" id="3_33cqm"]
 [ext_resource type="Texture2D" uid="uid://csyimsirusnkf" path="res://resource/HoverHighlight2.png" id="3_xwcet"]
+[ext_resource type="Script" uid="uid://bynvgx08a3ha3" path="res://scene/Camera2d.cs" id="5_p1ry8"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_5kiuu")
@@ -56,3 +57,9 @@ offset_top = 64.0
 offset_right = 216.0
 offset_bottom = 95.0
 text = "鼠标左键被按下的时长："
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=397645248]
+position = Vector2(216, -204)
+offset = Vector2(600, 700)
+zoom = Vector2(0.65, 0.65)
+script = ExtResource("5_p1ry8")

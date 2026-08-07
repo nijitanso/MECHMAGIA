@@ -8,6 +8,7 @@ public partial class MapInteraction : TileMapLayer
     public Vector2I PreciousClickedCell { get; set; } = new Vector2I(-999, -999);
 
     //  设置鼠标左键按下的状态和按下的时间，用于区分点击和长按
+    //  TODO: 抽象出一个 MouseInput 类，专门处理鼠标输入相关的逻辑
     public bool IsMouseLeftHolding { get; set; } = false;
     public double MouseLeftHoldingTime { get; set; }
 
@@ -33,6 +34,7 @@ public partial class MapInteraction : TileMapLayer
         //  获取当前鼠标在网格中的坐标
         Vector2 localMousePosition = GetLocalMousePosition();
         Vector2I currentCellMousePosition = LocalToMap(localMousePosition);
+        GD.Print($"当前鼠标所在的坐标：{localMousePosition}");
 
         //  获取当前鼠标点击的按钮，返回值是一个 long 类型的整数，表示鼠标按钮的掩码，1表示左键，2表示右键，4表示中键，8表示第四个按钮，16表示第五个按钮，以此类推
         long clickedMouseButton = (long)(Input.GetMouseButtonMask());
@@ -59,7 +61,7 @@ public partial class MapInteraction : TileMapLayer
 
         mouseClickTimeShower.Text = $"鼠标左键按下时间：{MouseLeftHoldingTime:F2} 秒";
 
-        GD.Print($"当前鼠标所在的坐标：{currentCellMousePosition}，当前鼠标点击的按钮掩码：{clickedMouseButton}");
+        //GD.Print($"当前鼠标所在的坐标：{currentCellMousePosition}，当前鼠标点击的按钮掩码：{clickedMouseButton}");
 
         //  获取当前鼠标所在的坐标上的瓦片 ID，如果返回 -1，说明鼠标所在的坐标上没有瓦片
         int cellId = GetCellSourceId(currentCellMousePosition);
