@@ -8,7 +8,6 @@ public partial class MapInteraction : TileMapLayer
     public Vector2I PreciousClickedCell { get; set; } = new Vector2I(-999, -999);
 
     //  设置鼠标左键按下的状态和按下的时间，用于区分点击和长按
-    //  TODO: 抽象出一个 MouseInput 类，专门处理鼠标输入相关的逻辑
     
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -72,7 +71,7 @@ public partial class MapInteraction : TileMapLayer
             SetCell(cellPosition, 2, new Vector2I(0, 0));
         }
 
-        GD.Print($"Enter New Cell: {cellPosition}");
+        //GD.Print($"Enter New Cell: {cellPosition}");
     }
 
     public void QuitPreciousCell(Vector2I cellPosition)
@@ -82,7 +81,7 @@ public partial class MapInteraction : TileMapLayer
             SetCell(cellPosition, 2, new Vector2I(1, 0));
         }
 
-        GD.Print($"Quit Precious Cell: {cellPosition}");
+        //GD.Print($"Quit Precious Cell: {cellPosition}");
     }
 
     public void ClickCell(Vector2I cell)
