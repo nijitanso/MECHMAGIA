@@ -5,15 +5,20 @@ public partial class Camera2d : Camera2D
 {
     public Vector2 preciousMousePosition { get; set; }
     [Export] public float PanSpeed { get; set; } = 1.0f;
-    [Export] public float ZoomSpeed { get; set; } = 0.2f;
+    [Export] public float ZoomSpeed { get; set; } = 0.25f;
     [Export] public Vector2 MinZoom { get; set; } = new Vector2(0.6f, 0.6f);
     [Export] public Vector2 MaxZoom { get; set; } = new Vector2(4f, 4f);
 
+
+    private Vector2 newZoom;
+    private Vector2 newPosition;
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
         preciousMousePosition = GetGlobalMousePosition();
+        newZoom = Zoom;
+        newPosition = Position;
 
     }
 
@@ -33,6 +38,7 @@ public partial class Camera2d : Camera2D
             position.X -= PanSpeed * deltaX;
             position.Y -= PanSpeed * deltaY;
             Position = position;
+            newPosition = position;
         }
 
         if (clickedMouseButton == 0)
@@ -42,6 +48,13 @@ public partial class Camera2d : Camera2D
 
         GD.Print($"绝对位置：{GetGlobalMousePosition()}");
         //GD.Print($"相对位置：{GetLocalMousePosition()}");
+
+        
+        Zoom = Zoom.Lerp(newZoom, 8.0f * (float)delta); // 让缩放平滑过渡
+        Position = Position.Lerp(newPosition, 8.0f * (float)delta);
+
+        Zoom = new Vector2(Math.Clamp(Zoom.X, MinZoom.X, MaxZoom.X), Math.Clamp(Zoom.Y, MinZoom.Y, MaxZoom.Y));     //  限制缩放范围
+
     }
 
     /// <summary>
@@ -60,24 +73,25 @@ public partial class Camera2d : Camera2D
                 Vector2 pMousePosition = GetLocalMousePosition();
                 //GD.Print($"旧鼠标位置：{pMousePosition}");
 
+                Vector2 oldZoom = newZoom;
+
                 //  此处并不获取滚轮的滚动量，而是用一个固定的缩放速度来调整每次鼠标滚轮时zoom的变化量（因为_Input方法是每滚一次就调用一次）
-                Zoom += new Vector2(ZoomSpeed, ZoomSpeed); // 放大
+                newZoom = Zoom * (1.0f + ZoomSpeed); // 放大
                 //FollowingMouse(); // 让摄像机跟随鼠标位置
-                Vector2 cMousePosition = GetLocalMousePosition();
+                Vector2 cMousePosition = pMousePosition * (oldZoom / newZoom);
                 //GD.Print($"新鼠标位置：{cMousePosition}");
                 Vector2 deltaMousePosition = cMousePosition - pMousePosition;
-                Position -= deltaMousePosition; // 让摄像机跟随鼠标位置
+                newPosition -= deltaMousePosition; // 让摄像机跟随鼠标位置
                 //GD.Print($"摄像机位置：{Position}");
 
 
             }
             else if (mouseEvent.ButtonIndex == MouseButton.WheelDown && mouseEvent.Pressed)
             {
-                Zoom -= new Vector2(ZoomSpeed, ZoomSpeed); // 缩小
+                newZoom = Zoom * (1.0f - ZoomSpeed); // 缩小
             }
         }
 
-        Zoom = new Vector2(Math.Clamp(Zoom.X, MinZoom.X, MaxZoom.X), Math.Clamp(Zoom.Y, MinZoom.Y, MaxZoom.Y));     //  限制缩放范围
 
 
 
