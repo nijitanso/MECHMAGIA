@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://q424eifra8qk" path="res://scene/MapInteraction.cs" id="3_33cqm"]
 [ext_resource type="Texture2D" uid="uid://csyimsirusnkf" path="res://resource/HoverHighlight2.png" id="3_xwcet"]
 [ext_resource type="Script" uid="uid://bynvgx08a3ha3" path="res://scene/Camera2d.cs" id="5_p1ry8"]
+[ext_resource type="PackedScene" uid="uid://ianb4qyghj7p" path="res://scene/Counter.tscn" id="6_xlg7c"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_5kiuu")
@@ -62,3 +63,6 @@ text = "鼠标左键被按下的时长："
 position = Vector2(782, 499)
 zoom = Vector2(0.64, 0.64)
 script = ExtResource("5_p1ry8")
+
+[node name="Counter" parent="." unique_id=1946488390 instance=ExtResource("6_xlg7c")]
+position = Vector2(387, 176)

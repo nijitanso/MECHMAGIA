@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://ianb4qyghj7p"]
+
+[ext_resource type="Texture2D" uid="uid://biwjm6o6pti1x" path="res://resource/Unit-1.png" id="1_1h5m0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gk6v8"]
+
+[node name="Counter" type="Area2D" unique_id=1946488390]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1479538056]
+shape = SubResource("RectangleShape2D_gk6v8")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1066569474]
+position = Vector2(-1, -1)
+texture = ExtResource("1_1h5m0")
