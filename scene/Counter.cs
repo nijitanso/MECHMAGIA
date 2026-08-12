@@ -21,7 +21,7 @@ public partial class Counter : Area2D
 
 	private Vector2 _size;
 
-	private bool _isHovering = false;
+	public bool IsHovering { get; private set; } = false;
 	private bool _isSelected = false;
 
 	// Called when the node enters the scene tree for the first time.
@@ -57,13 +57,13 @@ public partial class Counter : Area2D
 
 	public void HoveringHighlight()
 	{
-		_isHovering = true;
+        IsHovering = true;
 		Scale = new Vector2(1.07f, 1.07f);
 		QueueRedraw();
 	}
 	public void NotHoveringHighlight()
 	{
-		_isHovering = false;
+        IsHovering = false;
 		Scale = new Vector2(1.0f, 1.0f);
 		QueueRedraw();
 	}
@@ -72,7 +72,7 @@ public partial class Counter : Area2D
 	{
 
 
-		if (_isHovering && !_isSelected)
+		if (IsHovering && !_isSelected)
 		{
 			DrawDashedLine(_topLeftPosition, _topRightPosition, Color.Color8(255, 255, 255), width: 4.0f);
 			DrawDashedLine(_topLeftPosition, _downLeftPosition, Color.Color8(255, 255, 255), width: 4.0f);
@@ -94,7 +94,7 @@ public partial class Counter : Area2D
 	{
 		if (@event is InputEventMouseButton mouseEvent)
 		{
-			if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && _isHovering)
+			if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && IsHovering)
 			{
 				if (!_isSelected)
 				{
@@ -108,8 +108,6 @@ public partial class Counter : Area2D
                 }
 				
 
-
-				
 			}
 		}
 	}

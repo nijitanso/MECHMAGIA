@@ -7,12 +7,17 @@ public partial class MapInteraction : TileMapLayer
     public Vector2I PreciousCell { get; set; } = new Vector2I(-999, -999);
     public Vector2I PreciousClickedCell { get; set; } = new Vector2I(-999, -999);
 
+
+    private Counter _counter;
+
+    private bool _isAnyCellHighlight = false;
+
     //  设置鼠标左键按下的状态和按下的时间，用于区分点击和长按
-    
+
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        
+        _counter = GetNode<Counter>("/root/Game/Counter");
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -35,15 +40,32 @@ public partial class MapInteraction : TileMapLayer
         {
 
             //  判断鼠标是否点击了左键，如果是则调用 ClickCell 方法
-            if (MouseManager.Instance.ClickedMouseButton == 1 && MouseManager.Instance.MouseLeftHoldingTime <= 0.01)
+            if (MouseManager.Instance.ClickedMouseButton == 1 && MouseManager.Instance.MouseLeftHoldingTime <= 0.01 && !_counter.IsHovering)
             {
                 ClickCell(currentCellMousePosition);
+            }
+
+            if (_counter.IsHovering)
+            {
+                
+                if (_isAnyCellHighlight)
+                {
+                    QuitPreciousCell(currentCellMousePosition);
+                    _isAnyCellHighlight = false;
+                }
+
+            }
+            else
+            {
+                EnterNewCell(currentCellMousePosition);
             }
 
             if (currentCellMousePosition != PreciousCell)
             {
 
                 EnterNewCell(currentCellMousePosition);
+
+
                 //  判断鼠标是否从没有瓦片的坐标进入，如果是则不用调用 QuitPreciousCell 方法，因为根本没有先前瓦片
                 if (PreciousCell != new Vector2I(-999, -999))
                 {
@@ -52,6 +74,8 @@ public partial class MapInteraction : TileMapLayer
                 PreciousCell = currentCellMousePosition;
 
             }
+
+
         }
         else
         {
@@ -69,6 +93,7 @@ public partial class MapInteraction : TileMapLayer
         if (cellPosition != PreciousClickedCell)
         {
             SetCell(cellPosition, 2, new Vector2I(0, 0));
+            _isAnyCellHighlight = true;
         }
 
         //GD.Print($"Enter New Cell: {cellPosition}");
@@ -76,6 +101,7 @@ public partial class MapInteraction : TileMapLayer
 
     public void QuitPreciousCell(Vector2I cellPosition)
     {
+        GD.Print("退出方法被触发");
         if (cellPosition != PreciousClickedCell)
         {
             SetCell(cellPosition, 2, new Vector2I(1, 0));
