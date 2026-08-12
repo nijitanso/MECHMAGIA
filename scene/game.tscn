@@ -63,6 +63,7 @@ text = "鼠标左键被按下的时长："
 position = Vector2(782, 499)
 zoom = Vector2(0.64, 0.64)
 script = ExtResource("5_p1ry8")
+ZoomSpeed = 0.3
 
 [node name="Counter" parent="." unique_id=1946488390 instance=ExtResource("6_xlg7c")]
-position = Vector2(387, 176)
+position = Vector2(575, 175)
