@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using HexGrid;
 
 public partial class Camera2d : Camera2D
 {

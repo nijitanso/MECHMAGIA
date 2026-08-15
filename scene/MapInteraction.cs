@@ -1,11 +1,14 @@
 using Godot;
+using HexGrid;
 using System;
+using System.Collections.Generic;
 
 public partial class MapInteraction : TileMapLayer
 {
     //  设置初始的“前一个格子”坐标
     public Vector2I PreciousCell { get; set; } = new Vector2I(-999, -999);
     public Vector2I PreciousClickedCell { get; set; } = new Vector2I(-999, -999);
+    public List<Vector2I> CellOffsetCoors { get; set; }
 
 
     private Counter _counter;
@@ -27,10 +30,12 @@ public partial class MapInteraction : TileMapLayer
         //  获取当前鼠标在网格中的坐标
         Vector2 localMousePosition = GetLocalMousePosition();
         Vector2I currentCellMousePosition = LocalToMap(localMousePosition);
-        //GD.Print($"当前鼠标所在的坐标：{localMousePosition}");
+        AxialCoordinates currentCellAxialPosition = AxialCoordinates.OffsetToAxial(currentCellMousePosition);
+        //GD.Print($"当前鼠标所在的偏移坐标：{currentCellMousePosition}");
+        //GD.Print($"当前鼠标所在的轴向坐标：{currentCellAxialPosition}");
 
         //  获取当前鼠标点击的按钮，返回值是一个 long 类型的整数，表示鼠标按钮的掩码，1表示左键，2表示右键，4表示中键，8表示第四个按钮，16表示第五个按钮，以此类推
-        
+
 
         //GD.Print($"当前鼠标所在的坐标：{currentCellMousePosition}，当前鼠标点击的按钮掩码：{clickedMouseButton}");
 
@@ -43,6 +48,11 @@ public partial class MapInteraction : TileMapLayer
             if (MouseManager.Instance.ClickedMouseButton == 1 && MouseManager.Instance.MouseLeftHoldingTime <= 0.01 && !_counter.IsHovering)
             {
                 ClickCell(currentCellMousePosition);
+            }
+
+            if (MouseManager.Instance.ClickedMouseButton == 2 && MouseManager.Instance.MouseLeftHoldingTime <= 0.01)
+            {
+                OnSelectCoor(currentCellMousePosition);
             }
 
             if (_counter.IsHovering)
@@ -122,4 +132,12 @@ public partial class MapInteraction : TileMapLayer
             PreciousClickedCell = cell;
         }
     }
+
+    public void OnSelectCoor(Vector2I cell)
+    {
+        EmitSignal(SignalName.SelectCoor, cell);
+    }
+
+
+    [Signal] public delegate void SelectCoorEventHandler(Vector2I coor);
 }
