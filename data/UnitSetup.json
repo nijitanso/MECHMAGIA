@@ -1,0 +1,8 @@
+{
+    "UnitSetup": [
+        {"ID": 1, "PosX": 2, "PosY": 6},
+        {"ID": 2, "PosX": 3, "PosY": 10},
+        {"ID": 2, "PosX": 5, "PosY": 7}
+    ]
+
+}

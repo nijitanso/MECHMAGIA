@@ -29,7 +29,7 @@ public partial class MouseManager : Node
 
     private void InitializeNode()
     {
-        mouseClickTimeShower = GetNode<Label>("/root/Game/MouseClickTimeShower");
+        mouseClickTimeShower = GetNode<Label>("/root/Main/MouseClickTimeShower");
         if (mouseClickTimeShower == null)
         {
             GD.PrintErr("没有找到 MouseClickTimeShower 节点！");

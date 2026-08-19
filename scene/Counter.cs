@@ -1,13 +1,18 @@
 using Godot;
+using Godot.Collections;
 using System;
 
 public partial class Counter : Area2D
 {
     //	这些数值将从数值类中获取
+    public int ID { get; set; }
     public int AttackPoint { get; set; }
     public int DefendkPoint { get; set; }
     public int MovePoint { get; set; } = 2;
-    [Export] public Vector2I CoorOnHex { get; set; } = new Vector2I(0, 0);	//TODO：要写一个setter，防止算子的坐标被设置为地图没有的图格
+    [Export] public Vector2I CoorOnHex { get; set; } = new Vector2I(0, 0);
+
+
+    private Array<Vector2I> _hexOffsetCoors;
 
     private Label _attackPointLabel;
     private Label _defendPointLabel;
@@ -36,8 +41,8 @@ public partial class Counter : Area2D
     {
 
 
-        _map = GetNode<Map>("/root/Game/Map");
-        _mapInteraction = GetNode<MapInteraction>("/root/Game/Map/MapInteraction");
+        _map = GetNode<Map>("/root/Main/Map");
+        _mapInteraction = GetNode<MapInteraction>("/root/Main/Map/MapInteraction");
         _attackPointLabel = GetNode<Label>("AttackPointLabel");
         _defendPointLabel = GetNode<Label>("DefendPointLabel");
         _movePointLabel = GetNode<Label>("MovePointLabel");
@@ -48,6 +53,8 @@ public partial class Counter : Area2D
 
         Position = _map.MapToLocal(CoorOnHex);
         _newPosition = Position;
+
+        _hexOffsetCoors = _map.GetUsedCells();
 
 
         _size = _collisionShape2D.Shape.GetRect().Size;

@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="MechMagia"
-run/main_scene="res://scene/game.tscn"
+run/main_scene="res://scene/Main.tscn"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
