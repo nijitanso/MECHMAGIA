@@ -181,8 +181,8 @@ public partial class Map : TileMapLayer
 
     private void GetHexMpList(Vector2I CoorOnHex, int MP)
     {
-        List<Vector2I> tempCoor = new List<Vector2I>();
-        int start = _hexOffsetCoors.IndexOf(CoorOnHex);
+        List<Vector2I> tempCoors = new List<Vector2I>(); // 用一个临时序列储存可移动至的地格坐标，因为每次调用这个方法时都要重置_canMoveCoors
+        int start = _hexOffsetCoors.IndexOf(CoorOnHex); // Dijkstra算法需要的开始节点的索引
 
         //  元组的解构
         var (weights, _) = Dijkstra.FindShortestPaths(_hexGraph, start);
