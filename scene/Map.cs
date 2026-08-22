@@ -248,7 +248,6 @@ public partial class Map : TileMapLayer
 	{
 		if (_canMoveCoors.Contains(cell))
 		{
-			_mapInteraction2.RemoveGreenHighlight(_canMoveCoors);
 			EmitSignal(SignalName.SelectCoor, cell);
 		}
 
