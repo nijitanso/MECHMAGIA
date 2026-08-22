@@ -1,8 +1,10 @@
 {
     "UnitSetup": [
-        {"ID": 1, "PosX": 2, "PosY": 6},
-        {"ID": 2, "PosX": 3, "PosY": 10},
-        {"ID": 3, "PosX": 5, "PosY": 7}
+        {"ID": 1, "PosX": 2, "PosY": 6, "Team": 0},
+        {"ID": 2, "PosX": 3, "PosY": 10, "Team": 0},
+        {"ID": 3, "PosX": 5, "PosY": 7, "Team": 0},
+        {"ID": 4, "PosX": 12, "PosY": 10, "Team": 1},
+        {"ID": 5, "PosX": 11, "PosY": 12, "Team": 1}
     ]
 
 }

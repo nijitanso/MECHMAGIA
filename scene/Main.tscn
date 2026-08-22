@@ -93,4 +93,4 @@ zoom = Vector2(0.64, 0.64)
 script = ExtResource("8_ob58h")
 ZoomSpeed = 0.3
 
-[node name="FamilyUnits" type="Node" parent="." unique_id=2135904185]
+[node name="FriendUnits" type="Node" parent="." unique_id=2135904185]

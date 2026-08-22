@@ -23,10 +23,10 @@ public partial class MapInteraction : TileMapLayer
         
     }
 
-    public void EnterNewCell(Vector2I cellPosition, Vector2I PreciousClickedCell)
+    public void EnterNewCell(Vector2I cellPosition, Vector2I preciousClickedCell)
     {
         //  高光实现逻辑是直接修改当前坐标的瓦片
-        if (cellPosition != PreciousClickedCell)
+        if (cellPosition != preciousClickedCell)
         {
             SetCell(cellPosition, 2, new Vector2I(0, 0));
         }
@@ -34,10 +34,10 @@ public partial class MapInteraction : TileMapLayer
         //GD.Print($"Enter New Cell: {cellPosition}");
     }
 
-    public void QuitPreciousCell(Vector2I cellPosition, Vector2I PreciousClickedCell)
+    public void QuitPreciousCell(Vector2I cellPosition, Vector2I preciousClickedCell)
     {
         //GD.Print("退出方法被触发");
-        if (cellPosition != PreciousClickedCell)
+        if (cellPosition != preciousClickedCell)
         {
             SetCell(cellPosition, 2, new Vector2I(1, 0));
         }
@@ -45,17 +45,20 @@ public partial class MapInteraction : TileMapLayer
         //GD.Print($"Quit Precious Cell: {cellPosition}");
     }
 
-    public void ClickCell(Vector2I cell, Vector2I PreciousClickedCell)
+    public void ClickCell(Vector2I cell, Vector2I preciousClickedCell)
     {
         //GD.Print("点击方法被触发");
-        if (cell != PreciousClickedCell)
+        if (cell != preciousClickedCell)
         {
             //GD.Print("进入判断体");
             SetCell(cell, 2, new Vector2I(2, 0));
-            SetCell(PreciousClickedCell, 2, new Vector2I(1, 0));
             //GD.Print($"Click Cell: {cell}");
         }
     }
 
+    public void DisclickCell(Vector2I cell)
+    {
+        SetCell(cell, 2, new Vector2I(1, 0));
+    }
     
 }

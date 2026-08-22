@@ -64,6 +64,13 @@ public partial class MouseManager : Node
         OnSwitchCounter();
     }
 
+    public void SelectSwitchToMap(Vector2I _, int _1, int coor)
+    {
+        SelectState = SelectStateEnum.Map;
+        SelectedMapCoor = coor;
+
+    }
+
     public static MouseManager Inst { get; private set; }   // 单例属性，其他类通过这个单例来使用MouseManager
 
     // 为了确保 Instance 在场景树中唯一，使用 _EnterTree 方法来设置 Instance（单例）
@@ -80,6 +87,7 @@ public partial class MouseManager : Node
     public HoverStateEnum HoverState { get; set; }
     public SelectStateEnum SelectState { get; set; }
     public int SelectedUnitID { get; set; }
+    public int SelectedMapCoor { get; set; }
 
     private Label mouseClickTimeShower;
     // Called when the node enters the scene tree for the first time.

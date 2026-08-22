@@ -128,9 +128,8 @@ public partial class Map : TileMapLayer
 		{
 			if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed &&　MM.Inst.HoverState == MM.HoverStateEnum.Map)
 			{
-				_mapInteraction.ClickCell(mouseCoorPos, PreciousClickedCell);
-				PreciousClickedCell = mouseCoorPos;
-			}
+				ClickCell(mouseCoorPos);
+            }
 
 			if (mouseEvent.ButtonIndex == MouseButton.Right && mouseEvent.Pressed)
 			{
@@ -141,6 +140,43 @@ public partial class Map : TileMapLayer
 
 		}
 	}
+
+	public void QuitCell(Vector2I coor)
+	{
+        _mapInteraction.QuitPreciousCell(coor, PreciousClickedCell);
+        _isAnyCellHighlight = false;
+    }
+
+    public void EnterCell(Vector2I coor)
+	{
+        _mapInteraction.EnterNewCell(coor, PreciousClickedCell);
+        _isAnyCellHighlight = true;
+    }
+
+    public void ClickCell(Vector2I coor)
+	{
+        _mapInteraction.ClickCell(coor, PreciousClickedCell);
+
+		if (coor != PreciousClickedCell)	// 若重复点击已选中的地格则不会取消黄色高光
+		{
+            _mapInteraction.DisclickCell(PreciousClickedCell);
+        }
+
+        PreciousClickedCell = coor;
+        OnClickCoor(coor);
+    }
+
+	/// <summary>
+	/// 这个事件一般来说是作为事件处理器使用，当有算子被选中时取消对当前地格的选中
+	/// </summary>
+	/// <param name="coor"></param>
+    public void DisclickCellForUnit(Vector2I _, int _1, int _2)
+	{
+        _mapInteraction.DisclickCell(PreciousClickedCell);
+        PreciousClickedCell = new Vector2I(-999, -999);
+
+    }
+
 
     /// <summary>
     /// 在_Process中每帧检测一次鼠标状态，以实现鼠标悬停在地格和算子上时的边框高亮
@@ -161,27 +197,24 @@ public partial class Map : TileMapLayer
 				// 若此前有被高亮的地格则取消该地格的高亮
 				if (_isAnyCellHighlight)
 				{
-					_mapInteraction.QuitPreciousCell(mouseCoorPos, PreciousClickedCell);
-					_isAnyCellHighlight = false;
+					QuitCell(mouseCoorPos);
 				}
 			}
 			else if (!_isAnyCellHighlight)
 			{
-				_mapInteraction.EnterNewCell(mouseCoorPos, PreciousClickedCell);
-				_isAnyCellHighlight= true;
+				EnterCell(mouseCoorPos);
 			}
 
 			// 悬停高亮的判断是检测当前的鼠标所在地格坐标是否与上一次被记录的地格坐标相同
 			if (mouseCoorPos != PreciousCell)
 			{
-				_isAnyCellHighlight = true;
-				_mapInteraction.EnterNewCell(mouseCoorPos, PreciousClickedCell);
+                EnterCell(mouseCoorPos);
 
-				// 判断鼠标是否从地图边缘进入，若是则不用取消上一个高亮的地格（因为根本没有）（说实话这段逻辑有点蠢，不过能用就用也不想改了）
-				if (PreciousCell != new Vector2I(-999, -999))
+                // 判断鼠标是否从地图边缘进入，若是则不用取消上一个高亮的地格（因为根本没有）（说实话这段逻辑有点蠢，不过能用就用也不想改了）
+                if (PreciousCell != new Vector2I(-999, -999))
 				{
-					_mapInteraction.QuitPreciousCell(PreciousCell, PreciousClickedCell);
-				}
+                    QuitCell(PreciousCell);
+                }
 
 				PreciousCell = mouseCoorPos;	// 更新被记录的地格
 			}
@@ -192,8 +225,8 @@ public partial class Map : TileMapLayer
 			// 这个判断存在的意义是为了不要反复调用取消高光的方法，否则会造成性能浪费和不必要的异常
 			if (PreciousCell != new Vector2I(-999, -999))
 			{
-				_mapInteraction.QuitPreciousCell(PreciousCell, PreciousClickedCell);
-			}
+                QuitCell(PreciousCell);
+            }
 
 			PreciousCell = new Vector2I(-999, -999);
 		}
@@ -240,20 +273,29 @@ public partial class Map : TileMapLayer
 	}
 
 
+	[Signal] public delegate void SelectCoorEventHandler(Vector2I coor);
+
     /// <summary>
     /// 当传入的地格坐标在_canMoveCoors里就触发SelectCoor事件，同时移除显示移动范围的高光（因为此时算子绑定该事件的方法已将算子移动）
     /// </summary>
     /// <param name="cell"></param>
-    protected virtual void OnSelectCoor(Vector2I cell)
-	{
-		if (_canMoveCoors.Contains(cell))
-		{
-			EmitSignal(SignalName.SelectCoor, cell);
-		}
+    protected virtual void OnSelectCoor(Vector2I coor)
+    {
+        if (_canMoveCoors.Contains(coor))
+        {
+            EmitSignal(SignalName.SelectCoor, coor);
+        }
 
-	}
+    }
 
-	[Signal] public delegate void SelectCoorEventHandler(Vector2I coor);
+    
+    [Signal] public delegate void ClickCoorEventHandler(Vector2I coor);
+
+    protected virtual void OnClickCoor(Vector2I coor)
+    {
+        EmitSignal(SignalName.ClickCoor, coor);
+    }
+
 
 }
 

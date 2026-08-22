@@ -7,6 +7,18 @@ using System.Text.Json.Serialization;
 namespace Data
 {
     /// <summary>
+    /// 友军，敌军，中立部队的枚举
+    /// </summary>
+    public enum TeamEnum
+    {
+        Friend = 0,
+        Enemy = 1,
+        Neutral = 2
+    }
+
+
+
+    /// <summary>
     /// 从JSON读取单位数据的数据类，注意这个类只用来读取JSON，创建的实例将会把数据传给真正被使用的静态类
     /// </summary>
     public class UnitDataJson
@@ -23,6 +35,7 @@ namespace Data
                 GD.Print("序列化UnitSetup.json成功");
 
                 UnitData.UnitSetup = unitDataJson.UnitSetup;    // 将数据传给静态类
+                
 
             }
             catch (Exception)
@@ -45,6 +58,7 @@ namespace Data
         public int ID { get; set; }
         public int PosX { get; set; }
         public int PosY { get; set; }
+        public TeamEnum Team { get; set; }
         private Vector2I coor;
         // 这个JsonIgnore特性表示它将在序列化时被JSON忽略，这个属性是用来拼装一些Godot特有的类型时所使用的
         [JsonIgnore]

@@ -1,15 +1,17 @@
 using Godot;
 using Godot.Collections;
 using System;
+using Data;
 
 public partial class Counter : Area2D
 {
 	//	这些数值将从数值类中获取
 	public int ID { get; set; }
+	public TeamEnum Team { get; set; }
 	public int AttackPoint { get; set; }
 	public int DefendkPoint { get; set; }
 	public int MovePoint { get; set; } = 2;
-	[Export] public Vector2I CoorOnHex { get; set; } = new Vector2I(0, 0);
+	public Vector2I CoorOnHex { get; set; } = new Vector2I(0, 0);
 
 
 	private Array<Vector2I> _hexOffsetCoors;    // 没看出来有什么用
@@ -22,9 +24,10 @@ public partial class Counter : Area2D
 	private Node2D _upperLayer;
 	private Map _map;
 	private MapInteraction _mapInteraction;
+	private Sprite2D _bodySprite2D;
 
-	// 算子对自身大小信息的储存，用于绘制鼠标悬停和选中边框
-	private Vector2 _topLeftPosition;
+    // 算子对自身大小信息的储存，用于绘制鼠标悬停和选中边框
+    private Vector2 _topLeftPosition;
 	private Vector2 _topRightPosition;
 	private Vector2 _downLeftPosition;
 	private Vector2 _downRightPosition;
@@ -46,19 +49,15 @@ public partial class Counter : Area2D
 		_movePointLabel = GetNode<Label>("MovePointLabel");
 		_collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
 		_upperLayer = GetNode<Node2D>("UpperLayer");
+        _bodySprite2D = GetNode<Sprite2D>("BodySprite2D");
 
 
 		// 算子的状态初始化
-		_movePointLabel.Text = MovePoint.ToString();
-
-		Position = _map.MapToLocal(CoorOnHex);
-		_newPosition = Position;
-
-		_hexOffsetCoors = _map.GetUsedCells();
+		Init();
 
 
-		// 计算算子大小
-		_size = _collisionShape2D.Shape.GetRect().Size;
+        // 计算算子大小
+        _size = _collisionShape2D.Shape.GetRect().Size;
 		_topLeftPosition = new Vector2(-_size.X / 2.0f, -_size.Y / 2.0f);
 		_topRightPosition = new Vector2(_size.X / 2.0f, -_size.Y / 2.0f);
 		_downLeftPosition = new Vector2(-_size.X / 2.0f, _size.Y / 2.0f);
@@ -80,10 +79,12 @@ public partial class Counter : Area2D
 		// 当有算子被选择时触发此事件，没有被选中的算子将会调用自身的Deselect方法（在SwitchDeselect方法内做判断并调用）
 		MouseManager.Inst.SwitchCounter += SwitchDeselect;
 
-		_map.SelectCoor += Move;	// 当地格被选中时触发此事件
+		_map.SelectCoor += Move;    // 当地格被选中时触发此事件
+		_map.ClickCoor += Deselect;
 
 		// 当算子被选中时触发事件，这里的绑定顺序一定不能调换，因为是先清除上一次选中时显示的绿色高亮再显示新的
-		SelectUnit += MouseManager.Inst.SelectSwitchToCounter;
+		SelectUnit += _map.DisclickCellForUnit;
+        SelectUnit += MouseManager.Inst.SelectSwitchToCounter;
 		SelectUnit += _map.GetHexMpList;	// 调用计算最小路径的方法，获取算子移动范围，并显示绿色高光
 
 		DeselectUnit += _map.RemoveGreen;
@@ -93,6 +94,33 @@ public partial class Counter : Area2D
 
 
 
+	}
+
+	public void Init()
+	{
+        Position = _map.MapToLocal(CoorOnHex);
+        _newPosition = Position;
+
+        _movePointLabel.Text = MovePoint.ToString();
+
+        _hexOffsetCoors = _map.GetUsedCells();
+
+
+		switch (Team)
+		{
+			case TeamEnum.Friend:
+                _bodySprite2D.Texture = GD.Load<Texture2D>("res://resource/Unit-1.png");
+                break;
+			case TeamEnum.Enemy:
+                _bodySprite2D.Texture = GD.Load<Texture2D>("res://resource/Unit-2.png");
+                break;
+			case TeamEnum.Neutral:
+                _bodySprite2D.Texture = GD.Load<Texture2D>("res://resource/Unit-1.png");
+                break;
+			default:
+                _bodySprite2D.Texture = GD.Load<Texture2D>("res://resource/Unit-1.png");
+                break;
+		}
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -185,13 +213,27 @@ public partial class Counter : Area2D
 		OnDeselectUnit();
 	}
 
-	public void SwitchDeselect()
+    /// <summary>
+    /// 这个重载是作为Map.ClickCoor事件的处理器而存在的
+    /// </summary>
+    /// <param name="coor"></param>
+    public void Deselect(Vector2I coor)
+    {
+
+        IsSelected = false;
+        QueueRedraw();
+
+        OnDeselectUnit();
+    }
+
+    public void SwitchDeselect()
 	{
 		if (MouseManager.Inst.SelectedUnitID != ID)
 		{
 			Deselect();
 		}
 	}
+
 
 
     /// <summary>

@@ -8,7 +8,7 @@ public partial class Main : Node2D
 {
 
     private PackedScene _counter;
-    private Node _familyUnits;
+    private Node _friendUnits;
     private Map _map;
 
     public List<Counter> Units { get; set; } = new List<Counter>();
@@ -17,7 +17,7 @@ public partial class Main : Node2D
     public override void _Ready()
     {
         _counter = GD.Load<PackedScene>("res://scene/Counter.tscn");
-        _familyUnits = GetNode<Node>("FamilyUnits");
+        _friendUnits = GetNode<Node>("FriendUnits");
         _map = GetNode<Map>("Map");
 
 
@@ -45,12 +45,13 @@ public partial class Main : Node2D
         {
             Counter counter = _counter.Instantiate<Counter>();
             counter.ID = unit.ID;
+            counter.Team = unit.Team;
             counter.CoorOnHex = unit.Coor;
 
             if (counter != null)
             {
                 Units.Add(counter);
-                _familyUnits.AddChild(counter);
+                _friendUnits.AddChild(counter);
             }
             else
             {
