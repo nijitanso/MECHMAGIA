@@ -3,13 +3,43 @@ using System;
 
 public partial class MouseManager : Node
 {
+    public enum SelectStateEnum
+    {
+        Map = 0,
+        Counter = 1
+    }
 
-    public static MouseManager Instance { get; private set; }
+    public enum HoverStateEnum
+    {
+        Map = 0,
+        Counter = 1
+    }
+
+
+    public void HoverSwitchToCounter()
+    {
+        HoverState = HoverStateEnum.Counter;
+    }
+
+    public void HoverSwitchToMap()
+    {
+        HoverState = HoverStateEnum.Map;
+    }
+
+    public void SelectSwitchToCounter(Vector2I _, int _1, int ID)
+    {
+        SelectState = SelectStateEnum.Counter;
+        SelectedUnitID = ID;
+
+        OnSwitchCounter();
+    }
+
+    public static MouseManager Inst { get; private set; }
 
     // 为了确保 Instance 在场景树中唯一，使用 _EnterTree 方法来设置 Instance（单例）
     public override void _EnterTree()
     {
-        Instance = this;
+        Inst = this;
     }
 
 
@@ -17,6 +47,9 @@ public partial class MouseManager : Node
     public bool IsMouseLeftHolding { get; set; } = false;
     public double MouseLeftHoldingTime { get; set; }
     public long ClickedMouseButton { get; set; }
+    public HoverStateEnum HoverState { get; set; }
+    public SelectStateEnum SelectState { get; set; }
+    public int SelectedUnitID { get; set; }
 
     private Label mouseClickTimeShower = null;
     // Called when the node enters the scene tree for the first time.
@@ -24,6 +57,7 @@ public partial class MouseManager : Node
 
     public override void _Ready()
     {
+        // 等待所有节点被加载进场景树后进行初始化
         CallDeferred(nameof(InitializeNode));
     }
 
@@ -71,4 +105,12 @@ public partial class MouseManager : Node
         if (mouseClickTimeShower != null)
             mouseClickTimeShower.Text = $"鼠标左键按下时长：{MouseLeftHoldingTime:F2}";
     }
+
+
+    public void OnSwitchCounter()
+    {
+        EmitSignal(SignalName.SwitchCounter);
+    }
+
+    [Signal] public delegate void SwitchCounterEventHandler();
 }

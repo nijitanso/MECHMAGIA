@@ -2,18 +2,23 @@ using Godot;
 using System;
 using System.Runtime.InteropServices.JavaScript;
 using Data;
+using System.Collections.Generic;
 
 public partial class Main : Node2D
 {
 
     private PackedScene _counter;
     private Node _familyUnits;
+    private Map _map;
+
+    public List<Counter> Units { get; set; } = new List<Counter>();
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
         _counter = GD.Load<PackedScene>("res://scene/Counter.tscn");
         _familyUnits = GetNode<Node>("FamilyUnits");
+        _map = GetNode<Map>("Map");
 
 
 
@@ -39,9 +44,24 @@ public partial class Main : Node2D
         foreach (var unit in UnitData.UnitSetup)
         {
             Counter counter = _counter.Instantiate<Counter>();
+            counter.ID = unit.ID;
             counter.CoorOnHex = unit.Coor;
-            _familyUnits.AddChild(counter);
+
+            if (counter != null)
+            {
+                Units.Add(counter);
+                _familyUnits.AddChild(counter);
+            }
+            else
+            {
+                GD.Print("有counter实例化失败！");
+            }
+
+            
+            
 
         }
     }
+
+    
 }

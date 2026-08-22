@@ -23,13 +23,12 @@ public partial class MapInteraction : TileMapLayer
         
     }
 
-    public void EnterNewCell(Vector2I cellPosition, Vector2I PreciousClickedCell, bool _isAnyCellHighlight)
+    public void EnterNewCell(Vector2I cellPosition, Vector2I PreciousClickedCell)
     {
         //  高光实现逻辑是直接修改当前坐标的瓦片
         if (cellPosition != PreciousClickedCell)
         {
             SetCell(cellPosition, 2, new Vector2I(0, 0));
-            _isAnyCellHighlight = true;
         }
 
         //GD.Print($"Enter New Cell: {cellPosition}");
@@ -46,7 +45,7 @@ public partial class MapInteraction : TileMapLayer
         //GD.Print($"Quit Precious Cell: {cellPosition}");
     }
 
-    public void ClickCell(Vector2I cell, ref Vector2I PreciousClickedCell)
+    public void ClickCell(Vector2I cell, Vector2I PreciousClickedCell)
     {
         //GD.Print("点击方法被触发");
         if (cell != PreciousClickedCell)
@@ -54,8 +53,7 @@ public partial class MapInteraction : TileMapLayer
             //GD.Print("进入判断体");
             SetCell(cell, 2, new Vector2I(2, 0));
             SetCell(PreciousClickedCell, 2, new Vector2I(1, 0));
-            GD.Print($"Click Cell: {cell}");
-            PreciousClickedCell = cell;
+            //GD.Print($"Click Cell: {cell}");
         }
     }
 

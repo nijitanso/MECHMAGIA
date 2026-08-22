@@ -6,6 +6,9 @@ using System.Text.Json.Serialization;
 
 namespace Data
 {
+    /// <summary>
+    /// 从JSON读取单位数据的数据类，注意这个类只用来读取JSON，创建的实例将会把数据传给真正被使用的静态类
+    /// </summary>
     public class UnitDataJson
     {
         public List<UnitInfo> UnitSetup { get; set; }
@@ -19,17 +22,19 @@ namespace Data
                 UnitDataJson unitDataJson = JsonSerializer.Deserialize<UnitDataJson>(json);
                 GD.Print("序列化UnitSetup.json成功");
 
-                UnitData.UnitSetup = unitDataJson.UnitSetup;
+                UnitData.UnitSetup = unitDataJson.UnitSetup;    // 将数据传给静态类
 
             }
             catch (Exception)
             {
-
                 GD.PrintErr("序列化UnitSetup.json失败！");
             }
         }
     }
 
+    /// <summary>
+    /// 存储了单位数据的静态类
+    /// </summary>
     public static class UnitData
     {
         public static List<UnitInfo> UnitSetup { get; set; }
@@ -41,7 +46,9 @@ namespace Data
         public int PosX { get; set; }
         public int PosY { get; set; }
         private Vector2I coor;
-        [JsonIgnore] public Vector2I Coor
+        // 这个JsonIgnore特性表示它将在序列化时被JSON忽略，这个属性是用来拼装一些Godot特有的类型时所使用的
+        [JsonIgnore]
+        public Vector2I Coor
         {
             get { return new Vector2I(PosX, PosY); }
             set { coor = value; }
