@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://q424eifra8qk" path="res://scene/MapInteraction.cs" id="6_hrl0l"]
 [ext_resource type="Script" uid="uid://bs7de0smemvrp" path="res://scene/MapInteraction2.cs" id="7_tuai4"]
 [ext_resource type="Script" uid="uid://bynvgx08a3ha3" path="res://scene/Camera2d.cs" id="8_ob58h"]
+[ext_resource type="PackedScene" uid="uid://br8k7o7b4xuo5" path="res://scene/AttackIcon.tscn" id="9_3sxgj"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_pnqar")
@@ -79,6 +80,11 @@ script = ExtResource("6_hrl0l")
 [node name="MapInteraction2" type="TileMapLayer" parent="Map" unique_id=1872946087]
 tile_set = SubResource("TileSet_3hjv4")
 script = ExtResource("7_tuai4")
+
+[node name="AttackIcon" parent="Map" unique_id=280600482 instance=ExtResource("9_3sxgj")]
+visible = false
+z_index = 5
+z_as_relative = false
 
 [node name="MouseClickTimeShower" type="Label" parent="." unique_id=2131793230]
 offset_left = 40.0

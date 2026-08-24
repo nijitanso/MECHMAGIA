@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using Data;
 
 public partial class MouseManager : Node
 {
@@ -15,7 +16,8 @@ public partial class MouseManager : Node
         /// <summary>
         /// 此时鼠标选中了一个算子
         /// </summary>
-        Counter = 1
+        Counter = 1,
+        Null = 2,
     }
 
     /// <summary>
@@ -50,25 +52,47 @@ public partial class MouseManager : Node
     }
 
     /// <summary>
-    /// 事件处理器，响应算子的SelectUnit事件，切换切换鼠标的选中实体类型为算子，同时储存此时被选中的算子的ID，并触发SwitchCounter事件，
-    /// 通知没有被选中的算子做出反应
+    /// 事件处理器，响应算子的SelectUnit事件，先触发SwitchCounter事件，
+    /// 通知所有算子取消选中（逻辑是先取消所有被选中算子，再选中所点击的算子），切换鼠标的选中实体类型为算子，同时储存此时被选中的算子的ID，
     /// </summary>
     /// <param name="_"></param>
     /// <param name="_1"></param>
     /// <param name="ID"></param>
-    public void SelectSwitchToCounter(Vector2I _, int _1, int ID)
+    public void SelectSwitchToCounter(UnitInfo unitInfo)
     {
-        SelectState = SelectStateEnum.Counter;
-        SelectedUnitID = ID;
-
         OnSwitchCounter();
+
+        SelectState = SelectStateEnum.Counter;
+        SelectedUnit.ID = unitInfo.ID;
     }
 
-    public void SelectSwitchToMap(Vector2I _, int _1, int coor)
+    public void SelectSwitchToMap(Vector2I coor)
     {
         SelectState = SelectStateEnum.Map;
         SelectedMapCoor = coor;
 
+    }
+
+    public void SetHoveringUnit(UnitInfo unit)
+    {
+        HoveringUnit = unit;
+    }
+
+    public void SetSelectedUnit(UnitInfo unit)
+    {
+        SelectedUnit = unit;
+    }
+
+    public void SetSelectedUnitToNull()
+    {
+        SelectedUnit = _nullUnit;
+    }
+
+
+
+    public void SetHoveringUnitToNull()
+    {
+        HoveringUnit = _nullUnit;
     }
 
     public static MouseManager Inst { get; private set; }   // 单例属性，其他类通过这个单例来使用MouseManager
@@ -85,11 +109,17 @@ public partial class MouseManager : Node
     public double MouseLeftHoldingTime { get; set; }
     public long ClickedMouseButton { get; set; }
     public HoverStateEnum HoverState { get; set; }
-    public SelectStateEnum SelectState { get; set; }
-    public int SelectedUnitID { get; set; }
-    public int SelectedMapCoor { get; set; }
+    public SelectStateEnum SelectState { get; set; } = SelectStateEnum.Null;
+
+    public Vector2I SelectedMapCoor { get; set; }
+    public UnitInfo SelectedUnit { get; set; } = new UnitInfo();
+    public UnitInfo HoveringUnit { get; set; } = new UnitInfo();    // 当HoveringUnit.ID == -1时，说明没有悬停的算子
+
+
+    private readonly UnitInfo _nullUnit = new UnitInfo() { ID = -1 };    // 私有字段用来储存没有悬停在算子上时HoveringUnit所引用的对象
 
     private Label mouseClickTimeShower;
+    private Map _map;
     // Called when the node enters the scene tree for the first time.
 
 
@@ -102,6 +132,7 @@ public partial class MouseManager : Node
     private void InitializeNode()
     {
         mouseClickTimeShower = GetNode<Label>("/root/Main/MouseClickTimeShower");
+        _map = GetNode<Map>("/root/Main/Map");
         if (mouseClickTimeShower == null)
         {
             GD.PrintErr("没有找到 MouseClickTimeShower 节点！");
@@ -110,13 +141,16 @@ public partial class MouseManager : Node
         {
             mouseClickTimeShower.Text = "找到MouseClickTimeShower 节点！";
         }
+
+
+        
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
 
-       
+
 
         ClickedMouseButton = (long)(Input.GetMouseButtonMask());
         if (ClickedMouseButton == 1)

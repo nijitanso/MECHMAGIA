@@ -1,4 +1,5 @@
 using Godot;
+using HexGrid;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -35,7 +36,7 @@ namespace Data
                 GD.Print("序列化UnitSetup.json成功");
 
                 UnitData.UnitSetup = unitDataJson.UnitSetup;    // 将数据传给静态类
-                
+
 
             }
             catch (Exception)
@@ -53,20 +54,35 @@ namespace Data
         public static List<UnitInfo> UnitSetup { get; set; }
     }
 
-    public class UnitInfo
+    /// <summary>
+    /// 描述了一个算子的信息，继承Godot中的标准数据类基类Resource以方便和引擎的其他API交互（如信号的参数传输）
+    /// </summary>
+    public partial class UnitInfo : RefCounted
     {
         public int ID { get; set; }
         public int PosX { get; set; }
         public int PosY { get; set; }
         public TeamEnum Team { get; set; }
-        private Vector2I coor;
         // 这个JsonIgnore特性表示它将在序列化时被JSON忽略，这个属性是用来拼装一些Godot特有的类型时所使用的
         [JsonIgnore]
         public Vector2I Coor
         {
             get { return new Vector2I(PosX, PosY); }
-            set { coor = value; }
+            set
+            {
+                PosX = value.X;
+                PosY = value.Y;
+            }
         }
+        [JsonIgnore]
+        public AxialCoor CoorOfAxial
+        {
+            get
+            {
+                return AxialCoor.OffsetToAxial(Coor);
+            }
+        }
+        [JsonIgnore] public int MP { get; set; } = 2;
 
     }
 }

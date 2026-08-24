@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://br8k7o7b4xuo5"]
+
+[ext_resource type="Texture2D" uid="uid://cs2ntpxovjy35" path="res://resource/AttackIcon.png" id="1_2pxf6"]
+
+[node name="AttackIcon" type="Sprite2D" unique_id=280600482]
+scale = Vector2(1.1, 1.1)
+texture = ExtResource("1_2pxf6")

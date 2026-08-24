@@ -44,9 +44,7 @@ public partial class Main : Node2D
         foreach (var unit in UnitData.UnitSetup)
         {
             Counter counter = _counter.Instantiate<Counter>();
-            counter.ID = unit.ID;
-            counter.Team = unit.Team;
-            counter.CoorOnHex = unit.Coor;
+            counter.UnitInfo = unit;
 
             if (counter != null)
             {
