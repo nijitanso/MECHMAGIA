@@ -10,6 +10,8 @@
 [ext_resource type="Script" uid="uid://bs7de0smemvrp" path="res://scene/MapInteraction2.cs" id="7_tuai4"]
 [ext_resource type="Script" uid="uid://bynvgx08a3ha3" path="res://scene/Camera2d.cs" id="8_ob58h"]
 [ext_resource type="PackedScene" uid="uid://br8k7o7b4xuo5" path="res://scene/AttackIcon.tscn" id="9_3sxgj"]
+[ext_resource type="Script" uid="uid://nru6pwl4jp5k" path="res://scene/PanelContainer1.cs" id="11_764rb"]
+[ext_resource type="Script" uid="uid://jksi4btbecwy" path="res://scene/AttackMessage.cs" id="11_x4yfu"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_pnqar")
@@ -64,6 +66,8 @@ tile_shape = 3
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetAtlasSource_ll5lq")
 
+[sub_resource type="LabelSettings" id="LabelSettings_llu5k"]
+
 [node name="Main" type="Node2D" unique_id=1774698135]
 script = ExtResource("1_3sxgj")
 
@@ -100,3 +104,34 @@ script = ExtResource("8_ob58h")
 ZoomSpeed = 0.3
 
 [node name="FriendUnits" type="Node" parent="." unique_id=2135904185]
+
+[node name="GUI" type="CanvasLayer" parent="." unique_id=353398706]
+
+[node name="VBoxContainer1" type="VBoxContainer" parent="GUI" unique_id=381880565]
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -56.0
+offset_right = 56.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer1" type="MarginContainer" parent="GUI/VBoxContainer1" unique_id=1973106273]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/margin_top = 50
+
+[node name="PanelContainer1" type="PanelContainer" parent="GUI/VBoxContainer1/MarginContainer1" unique_id=960702258]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("11_764rb")
+
+[node name="AttackMessage" type="Label" parent="GUI/VBoxContainer1/MarginContainer1/PanelContainer1" unique_id=1470455274]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "是的是的大苏打"
+label_settings = SubResource("LabelSettings_llu5k")
+script = ExtResource("11_x4yfu")

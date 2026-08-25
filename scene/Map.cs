@@ -8,6 +8,7 @@ using System.Drawing;
 using System.Linq;
 
 using MM = MouseManager;
+using APC = ActionProcessor.AttackProcessor;
 public partial class Map : TileMapLayer
 {
     //  服务于最小路径算法的5个字段序列
@@ -127,6 +128,12 @@ public partial class Map : TileMapLayer
     {
         Vector2I mouseCoorPos = LocalToMap(GetLocalMousePosition());
 
+        List<UnitInfo> friends = new List<UnitInfo>();
+        List<UnitInfo> enemies = new List<UnitInfo>();
+
+        friends.Add(MM.Inst.SelectedUnit);
+        enemies.Add(MM.Inst.HoveringUnit);
+
         if (@event is InputEventMouseButton mouseEvent)
         {
             if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && MM.Inst.HoverState == MM.HoverStateEnum.Map)
@@ -136,7 +143,16 @@ public partial class Map : TileMapLayer
 
             if (mouseEvent.ButtonIndex == MouseButton.Right && mouseEvent.Pressed)
             {
-                OnSelectCoor(mouseCoorPos);
+
+
+                if (_attackIcon.Visible && APC.Inst.AttackCheck(friends, enemies))
+                {
+                    APC.Inst.StartAttack();
+                }
+                else
+                {
+                    OnSelectCoor(mouseCoorPos);
+                }
             }
 
 
@@ -203,7 +219,7 @@ public partial class Map : TileMapLayer
         bool isNeighbor = neighbors.Contains(MM.Inst.HoveringUnit.CoorOfAxial);
 
         if (MM.Inst.SelectState != MM.SelectStateEnum.Counter) return;
-        GD.Print(isNeighbor);
+
         if (isEnemy && !_attackIcon.Visible && isNeighbor)
         {
             //GD.Print("显示");
@@ -239,7 +255,6 @@ public partial class Map : TileMapLayer
             // 判断从MouseManager类中的状态枚举来区分鼠标是悬停在地格上还是算子上，这段if语句是独立的判断算子悬停高亮的逻辑
             if (MM.Inst.HoverState == MM.HoverStateEnum.Counter)
             {
-                GD.Print(MM.Inst.HoveringUnit.ID);
 
                 // 若此前有被高亮的地格则取消该地格的高亮
                 if (_isAnyCellHighlight)
@@ -301,7 +316,7 @@ public partial class Map : TileMapLayer
             if (unitInfo.MP >= weights[i])
             {
                 var coor = _hexOffsetCoors[i];
-                GD.Print($"可以进入的地格：{coor}，移动力：{unitInfo.MP}，移动力消耗：{weights[i]}");
+                //GD.Print($"可以进入的地格：{coor}，移动力：{unitInfo.MP}，移动力消耗：{weights[i]}");
 
                 tempCoors.Add(coor);    // 先插入临时序列
 

@@ -63,6 +63,9 @@ namespace Data
         public int PosX { get; set; }
         public int PosY { get; set; }
         public TeamEnum Team { get; set; }
+        public int AP { get; set; }
+        public int DP { get; set; }
+        public int MP { get; set; }
         // 这个JsonIgnore特性表示它将在序列化时被JSON忽略，这个属性是用来拼装一些Godot特有的类型时所使用的
         [JsonIgnore]
         public Vector2I Coor
@@ -82,7 +85,7 @@ namespace Data
                 return AxialCoor.OffsetToAxial(Coor);
             }
         }
-        [JsonIgnore] public int MP { get; set; } = 2;
+
 
     }
 }

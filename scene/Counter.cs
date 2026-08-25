@@ -7,9 +7,6 @@ public partial class Counter : Area2D
 {
     //	这些数值将从数值类中获取
     public UnitInfo UnitInfo { get; set; } = new UnitInfo();
-    public int AttackPoint { get; set; }
-    public int DefendkPoint { get; set; }
-
 
     private Array<Vector2I> _hexOffsetCoors;    // 没看出来有什么用
 
@@ -101,7 +98,11 @@ public partial class Counter : Area2D
         Position = _map.MapToLocal(UnitInfo.Coor);
         _newPosition = Position;
 
+        
+        _attackPointLabel.Text = UnitInfo.AP.ToString();
+        _defendPointLabel.Text = UnitInfo.DP.ToString();
         _movePointLabel.Text = UnitInfo.MP.ToString();
+
 
         _hexOffsetCoors = _map.GetUsedCells();
 
