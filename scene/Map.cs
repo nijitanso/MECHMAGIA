@@ -11,10 +11,13 @@ using MM = MouseManager;
 using APC = ActionProcessor.AttackProcessor;
 public partial class Map : TileMapLayer
 {
-    //  服务于最小路径算法的5个字段序列
+    //  服务于最小路径算法的字段序列
     private Array<Vector2I> _hexOffsetCoors;    // 地格的偏移坐标数组（用数组是因为返回地格序列的方法的返回值是Godot内置的泛型数组，还是用列表泛型更方便，性能应该也差不到哪里去）
     private List<AxialCoor> _hexAxialCoors = new List<AxialCoor>();   // 地格的轴向坐标列表
     private TileData[] _hexDates;   // 每个地格的信息对象
+    private List<AxialCoor> _coorWithFZoc = new List<AxialCoor>(); // 有友方控制区的地格序列
+    private List<AxialCoor> _coorWithEZoc = new List<AxialCoor>(); // 有敌方控制区的地格序列
+    private List<(AxialCoor coor, TeamEnum team)> _coorWithUnit = new List<(AxialCoor coor, TeamEnum team)>();   // 有算子位于其上的地格，元素是一个元组，地格坐标和其上的单位的阵营
 
     /* 用于Dijkstra算法的表示游戏地图的图结构，是一个元素为列表的数组。
 	 * 每一个列表表示一个地格，列表的元素是元组，代表着与当前地格邻接的地格。
@@ -27,7 +30,9 @@ public partial class Map : TileMapLayer
     // 对节点的引用
     private MapInteraction _mapInteraction;
     private MapInteraction2 _mapInteraction2;
+    private MapInteraction3 _mapInteraction3;
     private Sprite2D _attackIcon;
+    private Main _main;
 
     // 用于实现鼠标进入地格时的高亮互动的属性和字段，现在看来不太优雅
     // TODO：尝试改进这个逻辑
@@ -42,7 +47,9 @@ public partial class Map : TileMapLayer
         // 获取对节点的引用
         _mapInteraction = GetNode<MapInteraction>("MapInteraction");
         _mapInteraction2 = GetNode<MapInteraction2>("MapInteraction2");
+        _mapInteraction3 = GetNode<MapInteraction3>("MapInteraction3");
         _attackIcon = GetNode<Sprite2D>("AttackIcon");
+        _main = GetParent<Main>();
 
 
         _hexOffsetCoors = GetUsedCells();   // 获取地格序列
@@ -96,7 +103,11 @@ public partial class Map : TileMapLayer
 
         ClickCoor += MM.Inst.SelectSwitchToMap;
 
+        _main.UnitsUpdate += UnitInitAndUPdate; 
+
     }
+
+
 
     /// <summary>
     /// 这个方法用来为代表地图的图结构的元素列表插入邻接点信息元组
@@ -115,6 +126,92 @@ public partial class Map : TileMapLayer
             float weightN = (float)_hexDates[indexN].GetCustomDataByLayerId(0);
 
             _hexGraph[i].Add((indexN, weightN));    // 插入
+        }
+    }
+
+    /// <summary>
+    /// 事件处理器，响应Main发出的UnitsUpdate，初始化和更新算子状态
+    /// </summary>
+    /// <param name="units"></param>
+    public void UnitInitAndUPdate(Array<Counter> units)
+    {
+        GetCoorWithUnit(units);
+        GetZoc(_coorWithUnit);
+    }
+
+
+    /// <summary>
+    /// 计算有算子在上面的地格序列，每次调用时清空原来的地格序列，并重新计算新的地格序列
+    /// </summary>
+    /// <param name="units"></param>
+    public void GetCoorWithUnit(Array<Counter> units)
+    {
+        _coorWithUnit.Clear();  // 方法开始前先清空旧序列
+
+        foreach (var unit in units) // 遍历Main节点传入的事件参数（算子的实例序列），分离出一个元组存入地格序列（地格坐标和算子的阵营）
+        {
+            _coorWithUnit.Add((unit.UnitInfo.CoorOfAxial, unit.UnitInfo.Team));
+        }
+    }
+
+    /// <summary>
+    /// 根据一个有单位的地格坐标序列获取友方ZOC序列和敌方ZOC序列
+    /// </summary>
+    /// <param name="coors"></param>
+    public void GetZoc(List<(AxialCoor coor, TeamEnum team)> coors)
+    {
+        // 每次被调用时都要先清空旧序列以便更新
+        _coorWithFZoc.Clear();
+        _coorWithEZoc.Clear();
+
+        // 将不同阵营的地格区分，用两个序列储存
+        List<AxialCoor> friendCoors = new List<AxialCoor>();
+        List<AxialCoor> enemyCoors = new List<AxialCoor>();
+
+        // 根据阵营将地格分成两个列表
+        foreach (var (coor, team) in coors)
+        {
+            switch (team)
+            {
+                case TeamEnum.Friend:
+                    friendCoors.Add(coor);
+                    break;
+                case TeamEnum.Enemy:
+                    enemyCoors.Add(coor);
+                    break;
+                case TeamEnum.Neutral:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // 这里两段类似的遍历有点啰嗦，但是又不想写方法复用了，更麻烦╰（‵□′）╯
+        foreach (var coor in friendCoors)
+        {
+            List<AxialCoor> neighborCoors = coor.GetNeighborCoor(_hexAxialCoors);   // 先获取地格的邻接地格（ZOC一般就是单位的一环内）
+
+            foreach (var neighbor in neighborCoors)
+            {
+                //  做一次判断以防存入相同的地格坐标
+                if (!_coorWithFZoc.Contains(neighbor))
+                {
+                    _coorWithFZoc.Add(neighbor);
+                }
+            }
+        }
+
+        foreach (var coor in enemyCoors)
+        {
+            List<AxialCoor> neighborCoors = coor.GetNeighborCoor(_hexAxialCoors);
+
+            foreach (var neighbor in neighborCoors)
+            {
+                if (!_coorWithEZoc.Contains(neighbor))
+                {
+                    _coorWithEZoc.Add(neighbor);
+                }
+            }
         }
     }
 
@@ -332,6 +429,28 @@ public partial class Map : TileMapLayer
     public void RemoveGreen()
     {
         _mapInteraction2.RemoveGreenHighlight(_canMoveCoors);
+    }
+
+    public void ShowZoc(UnitInfo unit)
+    {
+        switch (unit.Team)
+        {
+            case TeamEnum.Friend:
+                _mapInteraction3.ShowZoc(_coorWithEZoc);
+                break;
+            case TeamEnum.Enemy:
+                _mapInteraction3.ShowZoc(_coorWithFZoc);
+                break;
+            case TeamEnum.Neutral:
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void RemoveZoc()
+    {
+        _mapInteraction3.RemoveZoc(_hexAxialCoors);
     }
 
 

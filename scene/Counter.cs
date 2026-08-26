@@ -81,9 +81,12 @@ public partial class Counter : Area2D
         SelectUnit += MouseManager.Inst.SelectSwitchToCounter;
         SelectUnit += MouseManager.Inst.SetSelectedUnit;
         SelectUnit += _map.GetHexMpList;    // 调用计算最小路径的方法，获取算子移动范围，并显示绿色高光
+        SelectUnit += _map.ShowZoc;
 
         DeselectUnit += _map.RemoveGreen;
+        DeselectUnit += _map.RemoveZoc;
         DeselectUnit += MouseManager.Inst.SetSelectedUnitToNull;
+
 
         QueueRedraw();  // 这个重绘可能时实现阴影时留下的，现在有了更好的实现方法，但还是不敢动这行
 
@@ -252,6 +255,8 @@ public partial class Counter : Area2D
 
             Deselect();
 
+            OnMoveUnit();
+
         }
 
     }
@@ -261,12 +266,19 @@ public partial class Counter : Area2D
         EmitSignal(SignalName.SelectUnit, UnitInfo);
     }
 
+    [Signal] public delegate void SelectUnitEventHandler(UnitInfo unitInfo);
+
     protected virtual void OnDeselectUnit()
     {
         EmitSignal(SignalName.DeselectUnit);
     }
-
-
-    [Signal] public delegate void SelectUnitEventHandler(UnitInfo unitInfo);
+    
     [Signal] public delegate void DeselectUnitEventHandler();
+
+    protected virtual void OnMoveUnit()
+    {
+        EmitSignal(SignalName.MoveUnit);
+    }
+
+    [Signal] public delegate void MoveUnitEventHandler();
 }

@@ -46,6 +46,9 @@ public partial class Main : Node2D
             Counter counter = _counter.Instantiate<Counter>();
             counter.UnitInfo = unit;
 
+            // 将每个算子的MoveUnit的事件都用UnitsUpdate的触发方法绑定，每次算子移动时都要通知节点们更新算子状态
+            counter.MoveUnit += OnUnitsUpdate;
+
             if (counter != null)
             {
                 Units.Add(counter);
@@ -56,11 +59,19 @@ public partial class Main : Node2D
                 GD.Print("有counter实例化失败！");
             }
 
-            
-            
+            OnUnitsUpdate();  // 算子实例化完毕，通知其他节点更新算子状态
 
         }
     }
 
-    
+    public void OnUnitsUpdate()
+    {
+        // 因为要传一个序列，所以要转成Godot的内置序列（可以被Variant类型容纳），接收参数的一方再转回C#原生类型
+        EmitSignal(SignalName.UnitsUpdate, new Godot.Collections.Array<Counter>(Units));  
+    }
+
+  
+    [Signal] public delegate void UnitsUpdateEventHandler(Godot.Collections.Array<Counter> units);
+
+
 }

@@ -8,8 +8,10 @@
 [ext_resource type="Texture2D" uid="uid://csyimsirusnkf" path="res://resource/HoverHighlight2.png" id="5_aex65"]
 [ext_resource type="Script" uid="uid://q424eifra8qk" path="res://scene/MapInteraction.cs" id="6_hrl0l"]
 [ext_resource type="Script" uid="uid://bs7de0smemvrp" path="res://scene/MapInteraction2.cs" id="7_tuai4"]
+[ext_resource type="Texture2D" uid="uid://djvjsxl8t7hc5" path="res://resource/ZocIcon.png" id="8_aex65"]
 [ext_resource type="Script" uid="uid://bynvgx08a3ha3" path="res://scene/Camera2d.cs" id="8_ob58h"]
 [ext_resource type="PackedScene" uid="uid://br8k7o7b4xuo5" path="res://scene/AttackIcon.tscn" id="9_3sxgj"]
+[ext_resource type="Script" uid="uid://cm3uiac8mclsw" path="res://scene/MapInteraction3.cs" id="10_hrl0l"]
 [ext_resource type="Script" uid="uid://nru6pwl4jp5k" path="res://scene/PanelContainer1.cs" id="11_764rb"]
 [ext_resource type="Script" uid="uid://jksi4btbecwy" path="res://scene/AttackMessage.cs" id="11_x4yfu"]
 
@@ -58,13 +60,23 @@ sources/1 = SubResource("TileSetAtlasSource_17rxn")
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ll5lq"]
 texture = ExtResource("4_764rb")
-texture_region_size = Vector2i(64, 64)
+texture_region_size = Vector2i(66, 66)
 0:0/0 = 0
 
 [sub_resource type="TileSet" id="TileSet_3hjv4"]
 tile_shape = 3
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetAtlasSource_ll5lq")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tuai4"]
+texture = ExtResource("8_aex65")
+texture_region_size = Vector2i(66, 66)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_8s0pl"]
+tile_shape = 3
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("TileSetAtlasSource_tuai4")
 
 [sub_resource type="LabelSettings" id="LabelSettings_llu5k"]
 
@@ -84,6 +96,10 @@ script = ExtResource("6_hrl0l")
 [node name="MapInteraction2" type="TileMapLayer" parent="Map" unique_id=1872946087]
 tile_set = SubResource("TileSet_3hjv4")
 script = ExtResource("7_tuai4")
+
+[node name="MapInteraction3" type="TileMapLayer" parent="Map" unique_id=1217900245]
+tile_set = SubResource("TileSet_8s0pl")
+script = ExtResource("10_hrl0l")
 
 [node name="AttackIcon" parent="Map" unique_id=280600482 instance=ExtResource("9_3sxgj")]
 visible = false
