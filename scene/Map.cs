@@ -1,14 +1,16 @@
+using Data;
 using Godot;
 using Godot.Collections;
 using HexGrid;
-using Data;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
-
-using MM = MouseManager;
+using System.Runtime;
 using APC = ActionProcessor.AttackProcessor;
+using MM = MouseManager;
 public partial class Map : TileMapLayer
 {
     //  服务于最小路径算法的字段序列
@@ -17,6 +19,7 @@ public partial class Map : TileMapLayer
     private TileData[] _hexDates;   // 每个地格的信息对象
     private List<AxialCoor> _coorWithFZoc = new List<AxialCoor>(); // 有友方控制区的地格序列
     private List<AxialCoor> _coorWithEZoc = new List<AxialCoor>(); // 有敌方控制区的地格序列
+    private List<AxialCoor> _coorWithZoc = new List<AxialCoor>(); // 有控制区的地格序列（全部的控制区，无论敌我）
     private List<(AxialCoor coor, TeamEnum team)> _coorWithUnit = new List<(AxialCoor coor, TeamEnum team)>();   // 有算子位于其上的地格，元素是一个元组，地格坐标和其上的单位的阵营
 
     /* 用于Dijkstra算法的表示游戏地图的图结构，是一个元素为列表的数组。
@@ -25,6 +28,7 @@ public partial class Map : TileMapLayer
 	 * 被每个列表代表的地格将用其索引在不同的序列中以不同的形式获取，因此不需要在这个图结构中存储地格的额外信息 */
     private List<(int to, float weight)>[] _hexGraph;
     private List<Vector2I> _canMoveCoors = new List<Vector2I>();    // 算子可以移动至的地格
+    private int[] _prev;
 
 
     // 对节点的引用
@@ -103,7 +107,7 @@ public partial class Map : TileMapLayer
 
         ClickCoor += MM.Inst.SelectSwitchToMap;
 
-        _main.UnitsUpdate += UnitInitAndUPdate; 
+        _main.UnitsUpdate += UnitInitAndUPdate;
 
     }
 
@@ -213,6 +217,8 @@ public partial class Map : TileMapLayer
                 }
             }
         }
+
+        _coorWithZoc = _coorWithFZoc.Union(_coorWithEZoc).ToList();
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -391,6 +397,29 @@ public partial class Map : TileMapLayer
         }
     }
 
+    private List<AxialCoor> GetCorrZocs(TeamEnum team)
+    {
+        List<AxialCoor> zocs;
+
+        switch (team)
+        {
+            case TeamEnum.Friend:
+                zocs = _coorWithEZoc;
+                break;
+            case TeamEnum.Enemy:
+                zocs = _coorWithFZoc;
+                break;
+            case TeamEnum.Neutral:
+                zocs = _coorWithEZoc;
+                break;
+            default:
+                zocs = _coorWithEZoc;
+                break;
+        }
+
+        return zocs;
+    }
+
     /// <summary>
     /// 这个方法用于在算子被选中时计算可移动范围并显示绿色高亮
     /// </summary>
@@ -402,23 +431,42 @@ public partial class Map : TileMapLayer
         List<Vector2I> tempCoors = new List<Vector2I>(); // 用一个临时序列储存可移动至的地格坐标，因为每次调用这个方法时都要重置_canMoveCoors
         int start = _hexOffsetCoors.IndexOf(unitInfo.Coor); // Dijkstra算法需要的开始节点的索引
 
+        List<AxialCoor> zocs = GetCorrZocs(unitInfo.Team);
         /* 调用Dijkstra算法返回一个元组，元组的第一个元素就是所有地格距离当前地格的最小距离（移动力成本）
 		此处语法是元组的解构 */
-        var (weights, _) = Dijkstra.FindShortestPaths(_hexGraph, start);
 
 
-        // 遍历这个最小距离序列，将移动力成本小于等于算子移动力的地格坐标插入_canMoveCoors
-        for (int i = 0; i < weights.Length; i++)
+        if (!zocs.Contains(unitInfo.CoorOfAxial))
         {
-            if (unitInfo.MP >= weights[i])
+            var (weights, prev) = Dijkstra.FindShortestPaths(_hexGraph, start, _hexAxialCoors, zocs);
+            _prev = prev;
+
+            // 遍历这个最小距离序列，将移动力成本小于等于算子移动力的地格坐标插入_canMoveCoors
+            for (int i = 0; i < weights.Length; i++)
             {
-                var coor = _hexOffsetCoors[i];
-                //GD.Print($"可以进入的地格：{coor}，移动力：{unitInfo.MP}，移动力消耗：{weights[i]}");
+                if (unitInfo.MP >= weights[i])
+                {
+                    var coor = _hexOffsetCoors[i];
+                    //GD.Print($"可以进入的地格：{coor}，移动力：{unitInfo.MP}，移动力消耗：{weights[i]}");
 
-                tempCoors.Add(coor);    // 先插入临时序列
+                    tempCoors.Add(coor);    // 先插入临时序列
 
+                }
             }
         }
+        else
+        {
+            List<AxialCoor> tempCoorsWithAxial = unitInfo.CoorOfAxial.GetNeighborCoor(_hexAxialCoors);
+            foreach (var coor in tempCoorsWithAxial)
+            {
+                if (_hexAxialCoors.Contains(coor))
+                {
+                    tempCoors.Add(coor.AxialToOffset());
+                }
+            }
+        }
+
+
 
         _mapInteraction2.GreenHighlight(tempCoors);  // 调用第二个地图交互节点的绿色高亮方法
         _canMoveCoors = tempCoors;  // 更新可移动地格序列
@@ -454,7 +502,7 @@ public partial class Map : TileMapLayer
     }
 
 
-    [Signal] public delegate void SelectCoorEventHandler(Vector2I coor);
+    [Signal] public delegate void SelectCoorEventHandler(Array<Vector2I> coors);
 
     /// <summary>
     /// 当传入的地格坐标在_canMoveCoors里就触发SelectCoor事件，同时移除显示移动范围的高光（因为此时算子绑定该事件的方法已将算子移动）
@@ -462,10 +510,25 @@ public partial class Map : TileMapLayer
     /// <param name="cell"></param>
     protected virtual void OnSelectCoor(Vector2I coor)
     {
-        if (_canMoveCoors.Contains(coor))
+
+        if (!_canMoveCoors.Contains(coor)) return;
+
+        List<Vector2I> path;
+        UnitInfo unit = MM.Inst.SelectedUnit;
+
+        List<AxialCoor> zocs = GetCorrZocs(unit.Team);
+
+        if (!zocs.Contains(unit.CoorOfAxial))
         {
-            EmitSignal(SignalName.SelectCoor, coor);
+            int index = _hexOffsetCoors.IndexOf(coor);
+            path = Dijkstra.GetPath(_prev, index, _hexOffsetCoors, _hexOffsetCoors.IndexOf(MM.Inst.SelectedUnit.Coor));
         }
+        else
+        {
+            path = new List<Vector2I>() { coor };
+        }
+
+        EmitSignal(SignalName.SelectCoor, new Array<Vector2I>(path));
 
     }
 
@@ -495,7 +558,7 @@ public class Dijkstra
     /// <param name="graph"></param>
     /// <param name="start"></param>
     /// <returns>返回一个元组，两个元素分别是地格的最小距离序列和到达每一个地格所要经过的前驱地格（用于算出最小路径具体会经过的地格）</returns>
-    public static (float[] weights, int[] prev) FindShortestPaths(List<(int to, float weight)>[] graph, int start)
+    public static (float[] weights, int[] prev) FindShortestPaths(List<(int to, float weight)>[] graph, int start, List<AxialCoor> axials, List<AxialCoor> zocs)
     {
         // 初始化要返回的两个序列
         int n = graph.Length;
@@ -526,6 +589,11 @@ public class Dijkstra
                 continue;
             }
 
+            if (zocs.Contains(axials[v]))
+            {
+                continue;
+            }
+
             // 遍历当前所在顶点的所有邻接点，t是邻接点的索引，w是其权重
             foreach (var (t, w) in graph[v])
             {
@@ -544,5 +612,23 @@ public class Dijkstra
 
         return (weights, prev);
 
+    }
+
+    public static List<Vector2I> GetPath(int[] prev, int targetIndex, Array<Vector2I> coors, int start)
+    {
+        List<Vector2I> path = new List<Vector2I>();
+        path.Add(coors[targetIndex]);
+        int index = targetIndex;
+
+        while (prev[index] != start)
+        {
+            index = prev[index];
+            path.Add(coors[index]);
+
+        }
+
+        path.Reverse();
+
+        return path;
     }
 }

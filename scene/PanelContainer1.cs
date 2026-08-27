@@ -45,7 +45,7 @@ public partial class PanelContainer1 : PanelContainer
 
     public void Display()
     {
-        // 每当新显示使，杀掉原来的补间实例，重置淡出效果
+        // 每当新显示要出现时，杀掉原来的补间实例，重置淡出效果
         if (_tween != null)
         {
             _tween.Kill();

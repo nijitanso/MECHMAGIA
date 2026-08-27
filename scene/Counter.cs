@@ -1,6 +1,7 @@
 using Godot;
 using Godot.Collections;
 using System;
+using System.Collections.Generic;
 using Data;
 
 public partial class Counter : Area2D
@@ -31,6 +32,9 @@ public partial class Counter : Area2D
     public bool IsHovering { get; private set; } = false;
     public bool IsSelected { get; private set; } = false;
     private Vector2 _newPosition;
+
+
+    private Tween _tween;
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -101,7 +105,7 @@ public partial class Counter : Area2D
         Position = _map.MapToLocal(UnitInfo.Coor);
         _newPosition = Position;
 
-        
+
         _attackPointLabel.Text = UnitInfo.AP.ToString();
         _defendPointLabel.Text = UnitInfo.DP.ToString();
         _movePointLabel.Text = UnitInfo.MP.ToString();
@@ -130,7 +134,7 @@ public partial class Counter : Area2D
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        Position = Position.Lerp(_newPosition, 10.0f * (float)delta);   // 只是一行平滑移动
+        //Position = Position.Lerp(_newPosition, 10.0f * (float)delta);   // 只是一行平滑移动
     }
 
 
@@ -246,18 +250,30 @@ public partial class Counter : Area2D
     /// 如果算子处于被选中状态，将算子移动到传入的地格坐标处，同时取消选中（调用Deselect方法）
     /// </summary>
     /// <param name="coor"></param>
-    public void Move(Vector2I coor)
+    public async void Move(Array<Vector2I> path)
     {
-        if (IsSelected)
+        if (!IsSelected) return;
+
+        _tween = GetTree().CreateTween();
+
+        float time = 0.2f / path.Count;
+
+        foreach (var coor in path)
         {
             UnitInfo.Coor = coor;
-            _newPosition = _map.MapToLocal(coor);
-
-            Deselect();
-
-            OnMoveUnit();
-
+            _tween.TweenProperty(this, "position", _map.MapToLocal(coor), time);
         }
+
+        Deselect();
+
+
+        //_newPosition = _map.MapToLocal(coor);
+
+        
+
+        OnMoveUnit();
+
+
 
     }
 
@@ -272,7 +288,7 @@ public partial class Counter : Area2D
     {
         EmitSignal(SignalName.DeselectUnit);
     }
-    
+
     [Signal] public delegate void DeselectUnitEventHandler();
 
     protected virtual void OnMoveUnit()
