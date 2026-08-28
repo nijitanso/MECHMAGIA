@@ -52,7 +52,7 @@ public partial class Main : Node2D
             if (counter != null)
             {
                 Units.Add(counter);
-                _friendUnits.AddChild(counter);
+                this.AddChild(counter);
             }
             else
             {

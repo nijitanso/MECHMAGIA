@@ -1,8 +1,9 @@
+using Data;
 using Godot;
 using Godot.Collections;
 using System;
 using System.Collections.Generic;
-using Data;
+using APC = ActionProcessor.AttackProcessor;
 
 public partial class Counter : Area2D
 {
@@ -18,6 +19,7 @@ public partial class Counter : Area2D
     private CollisionShape2D _collisionShape2D;
     private Node2D _upperLayer;
     private Map _map;
+    private Main _main;
     private MapInteraction _mapInteraction;
     private Sprite2D _bodySprite2D;
 
@@ -32,6 +34,8 @@ public partial class Counter : Area2D
     public bool IsHovering { get; private set; } = false;
     public bool IsSelected { get; private set; } = false;
     private Vector2 _newPosition;
+
+    public Vector2I[] RetreatPath { get; set; }
 
 
     private Tween _tween;
@@ -48,6 +52,7 @@ public partial class Counter : Area2D
         _collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
         _upperLayer = GetNode<Node2D>("UpperLayer");
         _bodySprite2D = GetNode<Sprite2D>("BodySprite2D");
+        _main = GetParent<Main>();
 
         // 算子的状态初始化
         Init();
@@ -64,10 +69,14 @@ public partial class Counter : Area2D
         // 绑定事件（同一个事件绑定不同事件处理器时，绑定的顺序将影响事件处理器被调用的顺序，不能随意调换）
         // TODO：这里各种事件的订阅的范式不标准（应该在订阅者那边订阅，而不是发布者），考虑重构成本（或许可以实现一个事件总线）并且注意以后的事件订阅
 
+
+        _main.UnitsUpdate += SetRetreatPath;
+
         // 当鼠标进入算子时触发此事件
         MouseEntered += HoveringHighlight;  // 调用自己的边框高亮方法
         MouseEntered += MouseManager.Inst.HoverSwitchToCounter; // 调用MouseManager的方法，将悬停状态改为算子MouseEntered
         MouseEntered += SetHoveringUnit;
+        MouseEntered += Test;
 
         // 当鼠标离开算子时触发此事件，具体的事件处理器逻辑相同，不再赘述
         MouseExited += NotHoveringHighlight;
@@ -91,6 +100,8 @@ public partial class Counter : Area2D
         DeselectUnit += _map.RemoveZoc;
         DeselectUnit += MouseManager.Inst.SetSelectedUnitToNull;
 
+        APC.Inst.Attack += ProcessCR;
+
 
         QueueRedraw();  // 这个重绘可能时实现阴影时留下的，现在有了更好的实现方法，但还是不敢动这行
 
@@ -101,7 +112,7 @@ public partial class Counter : Area2D
 
     public void Init()
     {
-        GD.Print(UnitInfo.Coor);
+        //GD.Print(UnitInfo.Coor);
         Position = _map.MapToLocal(UnitInfo.Coor);
         _newPosition = Position;
 
@@ -129,6 +140,13 @@ public partial class Counter : Area2D
                 _bodySprite2D.Texture = GD.Load<Texture2D>("res://resource/Unit-1.png");
                 break;
         }
+
+
+    }
+
+    private void SetRetreatPath(Array<Counter> _)
+    {
+        RetreatPath = Dijkstra.GetRetreatPath(UnitInfo.CoorOfAxial, _map, UnitInfo.Team);
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -137,6 +155,10 @@ public partial class Counter : Area2D
         //Position = Position.Lerp(_newPosition, 10.0f * (float)delta);   // 只是一行平滑移动
     }
 
+    public void Test()
+    {
+        _map.Test(RetreatPath);
+    }
 
     public void SetHoveringUnit()
     {
@@ -157,6 +179,9 @@ public partial class Counter : Area2D
         IsHovering = true;
         Scale = new Vector2(1.07f, 1.07f);
         QueueRedraw();
+
+        
+        
     }
 
     /// <summary>
@@ -250,7 +275,7 @@ public partial class Counter : Area2D
     /// 如果算子处于被选中状态，将算子移动到传入的地格坐标处，同时取消选中（调用Deselect方法）
     /// </summary>
     /// <param name="coor"></param>
-    public async void Move(Array<Vector2I> path)
+    public void Move(Array<Vector2I> path)
     {
         if (!IsSelected) return;
 
@@ -266,14 +291,43 @@ public partial class Counter : Area2D
 
         Deselect();
 
-
-        //_newPosition = _map.MapToLocal(coor);
-
-        
-
         OnMoveUnit();
+    }
+
+    public void Retreat(Vector2I[] path, APC.CREnum cR)
+    {
+        _tween = GetTree().CreateTween();
+        float time = 0.2f / (int)cR;
+
+        for (int i = 0; i < (int)cR; i++)
+        {
+            UnitInfo.Coor = path[i];
+            _tween.TweenProperty(this, "position", _map.MapToLocal(path[i]), time);
+
+        }
+    }
+
+    public void ProcessCR()
+    {
+
+        //GD.Print(RetreatPath[0]);
 
 
+        if (IsHovering)
+        {
+            switch (APC.Inst.CR)
+            {
+                case APC.CREnum.DR:
+                case APC.CREnum.DR2:
+                case APC.CREnum.DR3:
+                    Retreat(RetreatPath, APC.Inst.CR);
+                    break;
+                case APC.CREnum.DE:
+                    break;
+                default:
+                    break;
+            }
+        }
 
     }
 
