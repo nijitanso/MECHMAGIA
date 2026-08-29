@@ -48,6 +48,7 @@ public partial class Main : Node2D
 
             // 将每个算子的MoveUnit的事件都用UnitsUpdate的触发方法绑定，每次算子移动时都要通知节点们更新算子状态
             counter.MoveUnit += OnUnitsUpdate;
+            counter.RemoveCounter += RemoveCounterFromTree;
 
             if (counter != null)
             {
@@ -62,6 +63,11 @@ public partial class Main : Node2D
             OnUnitsUpdate();  // 算子实例化完毕，通知其他节点更新算子状态
 
         }
+    }
+
+    public void RemoveCounterFromTree(Counter counter)
+    {
+        RemoveChild(counter);
     }
 
     public void OnUnitsUpdate()

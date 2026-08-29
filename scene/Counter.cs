@@ -76,7 +76,6 @@ public partial class Counter : Area2D
         MouseEntered += HoveringHighlight;  // 调用自己的边框高亮方法
         MouseEntered += MouseManager.Inst.HoverSwitchToCounter; // 调用MouseManager的方法，将悬停状态改为算子MouseEntered
         MouseEntered += SetHoveringUnit;
-        MouseEntered += Test;
 
         // 当鼠标离开算子时触发此事件，具体的事件处理器逻辑相同，不再赘述
         MouseExited += NotHoveringHighlight;
@@ -100,6 +99,7 @@ public partial class Counter : Area2D
         DeselectUnit += _map.RemoveZoc;
         DeselectUnit += MouseManager.Inst.SetSelectedUnitToNull;
 
+        APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
 
 
@@ -153,11 +153,6 @@ public partial class Counter : Area2D
     public override void _Process(double delta)
     {
         //Position = Position.Lerp(_newPosition, 10.0f * (float)delta);   // 只是一行平滑移动
-    }
-
-    public void Test()
-    {
-        _map.Test(RetreatPath);
     }
 
     public void SetHoveringUnit()
@@ -294,12 +289,14 @@ public partial class Counter : Area2D
         OnMoveUnit();
     }
 
-    public void Retreat(Vector2I[] path, APC.CREnum cR)
+    public void Retreat(Vector2I[] path, int num)
     {
-        _tween = GetTree().CreateTween();
-        float time = 0.2f / (int)cR;
+        if (!IsInsideTree()) return;
 
-        for (int i = 0; i < (int)cR; i++)
+        _tween = GetTree().CreateTween();
+        float time = 0.2f / num;
+
+        for (int i = 0; i < num; i++)
         {
             UnitInfo.Coor = path[i];
             _tween.TweenProperty(this, "position", _map.MapToLocal(path[i]), time);
@@ -307,22 +304,54 @@ public partial class Counter : Area2D
         }
     }
 
+    public void LossAP(int level)
+    {
+        UnitInfo.AP -= level;
+        _attackPointLabel.Text = UnitInfo.AP.ToString();
+
+    }
+
     public void ProcessCR()
     {
-
         //GD.Print(RetreatPath[0]);
-
-
         if (IsHovering)
         {
             switch (APC.Inst.CR)
             {
                 case APC.CREnum.DR:
+                    Retreat(RetreatPath, 1);
+                    break;
                 case APC.CREnum.DR2:
+                    Retreat(RetreatPath, 2);
+                    break;
                 case APC.CREnum.DR3:
-                    Retreat(RetreatPath, APC.Inst.CR);
+                    Retreat(RetreatPath, 3);
                     break;
                 case APC.CREnum.DE:
+                    OnRemoveCounter();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (IsSelected)
+        {
+            switch (APC.Inst.CR)
+            {
+                case APC.CREnum.AR:
+                    Retreat(RetreatPath, 1);
+                    break;
+                case APC.CREnum.AR1:
+                    LossAP(1);
+                    Retreat(RetreatPath, 1);
+                    break;
+                case APC.CREnum.AR2:
+                    LossAP(2);
+                    Retreat(RetreatPath, 1);
+                    break;
+                case APC.CREnum.AE:
+                    OnRemoveCounter();
                     break;
                 default:
                     break;
@@ -351,4 +380,11 @@ public partial class Counter : Area2D
     }
 
     [Signal] public delegate void MoveUnitEventHandler();
+
+    protected virtual void OnRemoveCounter()
+    {
+        EmitSignal(SignalName.RemoveCounter, this);
+    }
+
+    [Signal] public delegate void RemoveCounterEventHandler(Counter counter);
 }

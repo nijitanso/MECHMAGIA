@@ -2,7 +2,7 @@
     "UnitSetup": [
         {"ID": 1, "PosX": 2, "PosY": 6, "Team": 0, "AP": 2, "DP": 3, "MP": 2},
         {"ID": 2, "PosX": 3, "PosY": 10, "Team": 0, "AP": 4, "DP": 3, "MP": 3},
-        {"ID": 3, "PosX": 5, "PosY": 7, "Team": 0, "AP": 3, "DP": 5, "MP": 2},
+        {"ID": 3, "PosX": 5, "PosY": 7, "Team": 0, "AP": 3, "DP": 1, "MP": 2},
         {"ID": 4, "PosX": 12, "PosY": 10, "Team": 1, "AP": 6, "DP": 4, "MP": 3},
         {"ID": 5, "PosX": 11, "PosY": 12, "Team": 1, "AP": 5, "DP": 5, "MP": 3}
     ]
