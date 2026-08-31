@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Data;
 using Godot;
 
@@ -52,6 +53,8 @@ namespace ActionProcessor
         public int Ratio { get; set; }
         public int Dice { get; set; }
         public CREnum CR { get; set; }
+        public List<UnitInfo> Attackers { get; set; }
+        public List<UnitInfo> Defenders { get; set; }
 
 
         /// <summary>
@@ -71,6 +74,14 @@ namespace ActionProcessor
         /// <param name="enemies"></param>
         public bool AttackCheck(List<UnitInfo> friends, List<UnitInfo> enemies)
         {
+
+            /* 将参与战斗的双方单位储存起来，在处理CR时可以使用（不需要依靠选中和悬浮关系，免去了凌乱的顺序），赋值方式是浅拷贝（ToList方法），
+             即新建一个装有原来对象引用（序列里的元素是UnitInfo实例）的新序列，这样修改旧序列就不会影响这里的了，
+             毕竟所有的引用都被复制了一遍而不是对原来那个序列的引用*/
+            Attackers = friends.ToList();
+            Defenders = enemies.ToList();
+
+
             // 双方的总点数，用float是因为需要小数除法
             float totalAP = 0;
             float totalDP = 0;

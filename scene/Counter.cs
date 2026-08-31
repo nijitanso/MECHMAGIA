@@ -33,6 +33,7 @@ public partial class Counter : Area2D
     // 状态属性
     public bool IsHovering { get; private set; } = false;
     public bool IsSelected { get; private set; } = false;
+    public bool IsMultiSelect { get; set; } = false;
     private Vector2 _newPosition;
 
     public Vector2I[] RetreatPath { get; set; }
@@ -83,7 +84,7 @@ public partial class Counter : Area2D
         MouseExited += SetHoveringUnitToNull;
 
         // 当有算子被选择时触发此事件，没有被选中的算子将会调用自身的Deselect方法（在SwitchDeselect方法内做判断并调用）
-        MouseManager.Inst.SwitchCounter += Deselect;
+        MouseManager.Inst.SwitchCounter += DeselectForMultiSelect;
 
         _map.SelectCoor += Move;    // 当地格被选中时触发此事件
         _map.ClickCoor += Deselect;
@@ -99,11 +100,14 @@ public partial class Counter : Area2D
         DeselectUnit += _map.RemoveZoc;
         DeselectUnit += MouseManager.Inst.SetSelectedUnitToNull;
 
+        MultiSelect += _map.RemoveGreen;
+
         APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
 
 
         QueueRedraw();  // 这个重绘可能时实现阴影时留下的，现在有了更好的实现方法，但还是不敢动这行
+
 
 
 
@@ -146,13 +150,21 @@ public partial class Counter : Area2D
 
     private void SetRetreatPath(Array<Counter> _)
     {
+        if (!IsInsideTree()) return;
         RetreatPath = Dijkstra.GetRetreatPath(UnitInfo.CoorOfAxial, _map, UnitInfo.Team);
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        //Position = Position.Lerp(_newPosition, 10.0f * (float)delta);   // 只是一行平滑移动
+        if (Input.IsKeyPressed(Key.Ctrl))
+        {
+            IsMultiSelect = true;
+        }
+        else
+        {
+            IsMultiSelect= false;
+        }
     }
 
     public void SetHoveringUnit()
@@ -234,11 +246,18 @@ public partial class Counter : Area2D
 
             }
         }
+
+       
     }
 
     public void Select()
     {
         OnSelectUnit();
+
+        if (IsMultiSelect)
+        {
+            OnMultiSelect();
+        }
 
         IsSelected = true;
         QueueRedraw();
@@ -251,6 +270,15 @@ public partial class Counter : Area2D
         QueueRedraw();
 
         OnDeselectUnit();
+    }
+
+    /// <summary>
+    /// 多选时将不会将其他算子取消选择
+    /// </summary>
+    public void DeselectForMultiSelect()
+    {
+        if (IsMultiSelect) return;
+        Deselect();
     }
 
     /// <summary>
@@ -302,6 +330,8 @@ public partial class Counter : Area2D
             _tween.TweenProperty(this, "position", _map.MapToLocal(path[i]), time);
 
         }
+
+        OnMoveUnit();
     }
 
     public void LossAP(int level)
@@ -313,9 +343,16 @@ public partial class Counter : Area2D
 
     public void ProcessCR()
     {
-        //GD.Print(RetreatPath[0]);
-        if (IsHovering)
+        if(APC.Inst.Attackers.Count == 0)
         {
+            GD.Print("空");
+        }
+
+        //GD.Print(RetreatPath[0]);
+        if (APC.Inst.Defenders.Contains(this.UnitInfo))
+        {
+            
+
             switch (APC.Inst.CR)
             {
                 case APC.CREnum.DR:
@@ -335,8 +372,9 @@ public partial class Counter : Area2D
             }
         }
 
-        if (IsSelected)
+        if (APC.Inst.Attackers.Contains(this.UnitInfo))
         {
+            GD.Print("进攻方撤退");
             switch (APC.Inst.CR)
             {
                 case APC.CREnum.AR:
@@ -387,4 +425,12 @@ public partial class Counter : Area2D
     }
 
     [Signal] public delegate void RemoveCounterEventHandler(Counter counter);
+
+
+    protected virtual void OnMultiSelect()
+    {
+        EmitSignal(SignalName.MultiSelect);
+    }
+
+    [Signal] public delegate void MultiSelectEventHandler();
 }

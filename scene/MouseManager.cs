@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using Data;
+using System.Collections.Generic;
 
 public partial class MouseManager : Node
 {
@@ -53,7 +54,7 @@ public partial class MouseManager : Node
 
     /// <summary>
     /// 事件处理器，响应算子的SelectUnit事件，先触发SwitchCounter事件，
-    /// 通知所有算子取消选中（逻辑是先取消所有被选中算子，再选中所点击的算子），切换鼠标的选中实体类型为算子，同时储存此时被选中的算子的ID，
+    /// 通知所有算子取消选中（逻辑是先取消所有被选中算子，再选中所点击的算子），切换鼠标的选中实体类型为算子
     /// </summary>
     /// <param name="_"></param>
     /// <param name="_1"></param>
@@ -63,7 +64,6 @@ public partial class MouseManager : Node
         OnSwitchCounter();
 
         SelectState = SelectStateEnum.Counter;
-        SelectedUnit.ID = unitInfo.ID;
     }
 
     public void SelectSwitchToMap(Vector2I coor)
@@ -80,12 +80,12 @@ public partial class MouseManager : Node
 
     public void SetSelectedUnit(UnitInfo unit)
     {
-        SelectedUnit = unit;
+        SelectedUnits.Add(unit);
     }
 
     public void SetSelectedUnitToNull()
     {
-        SelectedUnit = _nullUnit;
+        SelectedUnits.Clear();
     }
 
 
@@ -112,7 +112,7 @@ public partial class MouseManager : Node
     public SelectStateEnum SelectState { get; set; } = SelectStateEnum.Null;
 
     public Vector2I SelectedMapCoor { get; set; }
-    public UnitInfo SelectedUnit { get; set; } = new UnitInfo();
+    public List<UnitInfo> SelectedUnits { get; set; } = new List<UnitInfo>();
     public UnitInfo HoveringUnit { get; set; } = new UnitInfo();    // 当HoveringUnit.ID == -1时，说明没有悬停的算子
 
 
