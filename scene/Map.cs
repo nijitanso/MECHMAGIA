@@ -28,8 +28,9 @@ public partial class Map : TileMapLayer
 	 * 被每个列表代表的地格将用其索引在不同的序列中以不同的形式获取，因此不需要在这个图结构中存储地格的额外信息 */
     private List<(int to, float weight)>[] _hexGraph;
     public List<(int to, float weight)>[] GraphForRPath { get; set; }  // 实际上是一个权重均为1的图，用来算两个地格之间的纯距离
+    public bool IsGrgphExisted { get; set; } = false;
     private List<Vector2I> _canMoveCoors = new List<Vector2I>();    // 算子可以移动至的地格
-    private int[] _prev;
+    private int[] _prev;    // 用来建立最短路径的具体路径的前驱节点序列
 
 
     // 对节点的引用
@@ -78,7 +79,7 @@ public partial class Map : TileMapLayer
             var axialCoor = AxialCoor.OffsetToAxial(coor);
             HexAxialCoors.Add(axialCoor);
 
-            // 为图结构先生成空的代表地格的列表
+            // 为图结构生成空的代表地格的列表
             _hexGraph[i] = new List<(int to, float weight)>();
             GraphForRPath[i] = new List<(int to, float weight)>();
 
@@ -88,13 +89,20 @@ public partial class Map : TileMapLayer
 
         ClickCoor += MM.Inst.SelectSwitchToMap;
 
+        // 响应UnitsUpdate事件，更新算子在地图上的状态
         _main.UnitsUpdate += UnitInitAndUPdate;
         _main.UnitsUpdate += AddGraph;
 
     }
 
+    /// <summary>
+    /// 当算子第一次Update时为图结构添加元素
+    /// </summary>
+    /// <param name="_"></param>
     public void AddGraph(Array<Counter> _)
     {
+        if (IsGrgphExisted) return;
+
         // 这个循环为图结构中的列表插入相应的元组
         for (int i = 0; i < _hexOffsetCoors.Count; i++)
         {
@@ -105,8 +113,9 @@ public partial class Map : TileMapLayer
             {
                 AddCoorInGraph(neighbor, i);
             }
-
         }
+
+        IsGrgphExisted = true;
     }
 
     /// <summary>
@@ -157,8 +166,15 @@ public partial class Map : TileMapLayer
         }
     }
 
+    /// <summary>
+    /// 将CoorWithUnit序列中敌我算子分开，考虑到有可能复用就用方法封装了
+    /// </summary>
+    /// <param name="friendCoors"></param>
+    /// <param name="enemyCoors"></param>
+    /// <param name="coors"></param>
     public void SeperateTeam(List<AxialCoor> friendCoors, List<AxialCoor> enemyCoors, List<(AxialCoor coor, TeamEnum team)> coors)
     {
+        // 元组美丽时刻，好灵活啊
         foreach (var (coor, team) in coors)
         {
             switch (team)
@@ -222,7 +238,7 @@ public partial class Map : TileMapLayer
             }
         }
 
-        _coorWithZoc = _coorWithFZoc.Union(_coorWithEZoc).ToList();
+        _coorWithZoc = _coorWithFZoc.Union(_coorWithEZoc).ToList(); // 将两个序列合并为一个总ZOC序列
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -233,28 +249,30 @@ public partial class Map : TileMapLayer
 
     public override void _Input(InputEvent @event)
     {
-        Vector2I mouseCoorPos = LocalToMap(GetLocalMousePosition());
+        Vector2I mouseCoorPos = LocalToMap(GetLocalMousePosition());    // 先获取当前鼠标所在位置
 
+        // 用于发起攻击时的双方阵营算子序列
         List<UnitInfo> friends = MM.Inst.SelectedUnits;
-        List<UnitInfo> enemies = new List<UnitInfo>();
+        List<UnitInfo> enemies = new List<UnitInfo>() { MM.Inst.HoveringUnit };
 
-        enemies.Add(MM.Inst.HoveringUnit);
 
         if (@event is InputEventMouseButton mouseEvent)
         {
+            // 判断左键时是否悬停在地图上
             if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && MM.Inst.HoverState == MM.HoverStateEnum.Map)
             {
                 ClickCell(mouseCoorPos);
             }
 
+            // 判断右键
             if (mouseEvent.ButtonIndex == MouseButton.Right && mouseEvent.Pressed)
             {
-
-
+                // 检测攻击图标是否可见和是否满足攻击条件
                 if (_attackIcon.Visible && APC.Inst.AttackCheck(friends, enemies))
                 {
                     APC.Inst.StartAttack();
                 }
+                // 不能进攻就移动算子
                 else
                 {
                     OnSelectCoor(mouseCoorPos);
@@ -266,35 +284,53 @@ public partial class Map : TileMapLayer
         }
     }
 
-
+    /// <summary>
+    /// 将攻击图标节点移动到对应位置并显示
+    /// </summary>
+    /// <param name="coor"></param>
     public void DisplayAttackIcon(Vector2I coor)
     {
         _attackIcon.Position = MapToLocal(coor);
         _attackIcon.Visible = true;
     }
 
+    /// <summary>
+    /// 隐藏攻击图标节点
+    /// </summary>
     public void HideAttackIcon()
     {
         _attackIcon.Visible = false;
     }
 
+    /// <summary>
+    /// 取消地格的白色边框，即悬停状态
+    /// </summary>
+    /// <param name="coor"></param>
     public void QuitCell(Vector2I coor)
     {
         _mapInteraction.QuitPreciousCell(coor, PreciousClickedCell);
         _isAnyCellHighlight = false;
     }
 
+    /// <summary>
+    /// 显示地格的白色边框，即悬停状态
+    /// </summary>
+    /// <param name="coor"></param>
     public void EnterCell(Vector2I coor)
     {
         _mapInteraction.EnterNewCell(coor, PreciousClickedCell);
         _isAnyCellHighlight = true;
     }
 
+    /// <summary>
+    /// 点击选中地格，显示黄色边框，触发ClickCoor方法
+    /// </summary>
+    /// <param name="coor"></param>
     public void ClickCell(Vector2I coor)
     {
         _mapInteraction.ClickCell(coor, PreciousClickedCell);
 
-        if (coor != PreciousClickedCell)    // 若重复点击已选中的地格则不会取消黄色高光
+        if (coor != PreciousClickedCell)    // 若重复点击已选中的地格则不会取消黄色边框
         {
             _mapInteraction.DisclickCell(PreciousClickedCell);
         }
@@ -313,37 +349,47 @@ public partial class Map : TileMapLayer
         PreciousClickedCell = new Vector2I(-999, -999);
     }
 
+    /// <summary>
+    /// 显示或隐藏攻击图标，变相判断能否发起进攻
+    /// </summary>
+    /// <param name="coor"></param>
     public void DetectAttackIcon(Vector2I coor)
     {
+
+        // 将长串的枚举状态判断结果先用意义明确的变量表示，让下面的if语句可读性更高，逻辑更清晰
+        bool isHovering = MM.Inst.HoverState == MM.HoverStateEnum.Counter;
+        bool isSelectUnit = MM.Inst.SelectState == MM.SelectStateEnum.Counter;
+        bool isNeighbor = false;
         bool isEnemy = false;
 
+        // 判断有没有选中单位，避免索引越界（空序列必定越界）
         if (MM.Inst.SelectedUnits.Count != 0)
         {
             isEnemy = MM.Inst.HoveringUnit.Team != MM.Inst.SelectedUnits[0].Team;
         }
 
-
-        // 将长串的枚举状态判断结果先用意义明确的变量表示，让下面的if语句可读性更高，逻辑更清晰
-
-        bool isHovering = MM.Inst.HoverState == MM.HoverStateEnum.Counter;
-        bool isSelectUnit = MM.Inst.SelectState == MM.SelectStateEnum.Counter;
-        List<UnitInfo> tSelectedUnits = MM.Inst.SelectedUnits;
+        List<UnitInfo> tSelectedUnits = MM.Inst.SelectedUnits;  // 将需要遍历的序列临时储存，避免频繁调用getter访问属性
+        AxialCoor hoveringUnit = MM.Inst.HoveringUnit.CoorOfAxial;
         AxialCoor axialCoor;
-        HashSet<AxialCoor> neighbors = new HashSet<AxialCoor>();    // 用哈希集合是因为其方便去重（自动）和包含检测极快（时间复杂度为O(1)）
 
         foreach (var unit in tSelectedUnits)
         {
             axialCoor = unit.CoorOfAxial;
 
-            foreach (var n in axialCoor.GetNeighborCoor(HexAxialCoors))
+            // 判断悬停的单位是否处于所有选中单位共有的相邻地格，只要有一个选中单位的相邻地格未处于就将isNeighbor设为false并跳出循环
+            if (axialCoor.GetNeighborCoor(HexAxialCoors).Contains(hoveringUnit))
             {
-                neighbors.Add(n);
+                isNeighbor = true;
             }
+            else
+            {
+                isNeighbor = false;
+                break;
+            }
+
         }
 
-
-        bool isNeighbor = neighbors.Contains(MM.Inst.HoveringUnit.CoorOfAxial);
-
+        // 如果根本就没选中单位就直接隐藏攻击图标并返回
         if (!isSelectUnit)
         {
             HideAttackIcon();
@@ -352,13 +398,11 @@ public partial class Map : TileMapLayer
 
         if (isEnemy && !_attackIcon.Visible && isNeighbor)
         {
-            //GD.Print("显示");
             DisplayAttackIcon(coor);
         }
 
         if ((!isEnemy || !isHovering) && _attackIcon.Visible)
         {
-            GD.Print("隐藏");
             HideAttackIcon();
         }
         //GD.Print($"悬停单位：{MM.Inst.HoveringUnit.Team}");
@@ -381,7 +425,6 @@ public partial class Map : TileMapLayer
         if (cellId != -1)
         {
             DetectAttackIcon(mouseCoorPos);
-
 
             // 判断从MouseManager类中的状态枚举来区分鼠标是悬停在地格上还是算子上，这段if语句是独立的判断算子悬停高亮的逻辑
             if (MM.Inst.HoverState == MM.HoverStateEnum.Counter)
@@ -425,6 +468,11 @@ public partial class Map : TileMapLayer
         }
     }
 
+    /// <summary>
+    /// 根据参数传入的阵营枚举返回相应的敌方ZOC
+    /// </summary>
+    /// <param name="team"></param>
+    /// <returns></returns>
     private List<AxialCoor> GetCorrZocs(TeamEnum team)
     {
         List<AxialCoor> zocs;
@@ -463,11 +511,11 @@ public partial class Map : TileMapLayer
         /* 调用Dijkstra算法返回一个元组，元组的第一个元素就是所有地格距离当前地格的最小距离（移动力成本）
 		此处语法是元组的解构 */
 
-
+        // 判断单位所处的地格是否在敌方ZOC上
         if (!zocs.Contains(unitInfo.CoorOfAxial))
         {
             var (weights, prev) = Dijkstra.FindShortestPaths(_hexGraph, start, this, zocs);
-            _prev = prev;
+            _prev = prev;   // 每次调用最短路径算法方法时都更新一下前驱节点序列
 
             // 遍历这个最小距离序列，将移动力成本小于等于算子移动力的地格坐标插入_canMoveCoors
             for (int i = 0; i < weights.Length; i++)
@@ -482,16 +530,19 @@ public partial class Map : TileMapLayer
                 }
             }
         }
+        // 若在则将移动范围强制变为相邻地格（无视地形）
         else
         {
             List<AxialCoor> tempCoorsWithAxial = unitInfo.CoorOfAxial.GetNeighborCoor(HexAxialCoors);
             foreach (var coor in tempCoorsWithAxial)
             {
+                // 不能移动到有单位的地格
                 if (CoorWithUnit.Contains((coor, TeamEnum.Friend)) || CoorWithUnit.Contains((coor, TeamEnum.Enemy)))
                 {
                     continue;
                 }
 
+                // 判断地格是否越界（虽然GetNeighborCoor方法已经确保了返回的相邻地格合法）
                 if (HexAxialCoors.Contains(coor))
                 {
                     tempCoors.Add(coor.AxialToOffset());
@@ -499,8 +550,9 @@ public partial class Map : TileMapLayer
             }
         }
 
-        tempCoors.Remove(unitInfo.Coor);
+        tempCoors.Remove(unitInfo.Coor);    // 移除单位所在的地格（不能原地移动）
 
+        // 判断是否单选单位，否则不显示移动范围和无法移动
         if (MM.Inst.SelectedUnits.Count == 1)
         {
             _mapInteraction2.GreenHighlight(tempCoors);  // 调用第二个地图交互节点的绿色高亮方法
@@ -512,29 +564,27 @@ public partial class Map : TileMapLayer
     }
 
 
-
+    /// <summary>
+    /// 移除可移动地格上的绿色高光
+    /// </summary>
     public void RemoveGreen()
     {
         _mapInteraction2.RemoveGreenHighlight(_canMoveCoors);
     }
 
+    /// <summary>
+    /// 事件处理器，响应Counter的SelectUnit事件。根据单位阵营显示对应的敌方ZOC
+    /// </summary>
+    /// <param name="unit"></param>
     public void ShowZoc(UnitInfo unit)
     {
-        switch (unit.Team)
-        {
-            case TeamEnum.Friend:
-                _mapInteraction3.ShowZoc(_coorWithEZoc);
-                break;
-            case TeamEnum.Enemy:
-                _mapInteraction3.ShowZoc(_coorWithFZoc);
-                break;
-            case TeamEnum.Neutral:
-                break;
-            default:
-                break;
-        }
+        List<AxialCoor> zoc = GetCorrZocs(unit.Team);
+        _mapInteraction3.ShowZoc(zoc);
     }
 
+    /// <summary>
+    /// 事件处理器，响应Counter的DeselectUnit事件。取消显示地图上所有被显示的ZOC
+    /// </summary>
     public void RemoveZoc()
     {
         _mapInteraction3.RemoveZoc(HexAxialCoors);
@@ -551,20 +601,21 @@ public partial class Map : TileMapLayer
     {
 
         if (!_canMoveCoors.Contains(coor)) return;
-        if (MM.Inst.SelectedUnits.Count == 0) return;
+        if (MM.Inst.SelectedUnits.Count == 0 || MM.Inst.SelectedUnits.Count > 1) return;
 
         List<Vector2I> path;
-        UnitInfo unit = MM.Inst.SelectedUnits[0];
+        UnitInfo unit = MM.Inst.SelectedUnits[0];   // 只有在单选算子的情况下才会执行到这（不是的话在上面的if就返回了），单选序列只有0索引的一个单位
 
         List<AxialCoor> zocs = GetCorrZocs(unit.Team);
 
         if (!zocs.Contains(unit.CoorOfAxial))
         {
             int index = _hexOffsetCoors.IndexOf(coor);
-            path = Dijkstra.GetPath(_prev, index, _hexOffsetCoors, _hexOffsetCoors.IndexOf(unit.Coor));
+            path = Dijkstra.GetPath(_prev, index, _hexOffsetCoors, _hexOffsetCoors.IndexOf(unit.Coor)); // 获取单位移动的最短路径
         }
         else
         {
+            // 如果在控制区内移动的话则路径就只是一格，不需要寻路了
             path = new List<Vector2I>() { coor };
         }
 
@@ -629,6 +680,7 @@ public class Dijkstra
                 continue;
             }
 
+            // 如果优先队列出队的是敌方控制区，那么将跳过，不会处理其邻接点（单位在进入控制区后无法继续移动）
             if (zocs.Contains(map.HexAxialCoors[v]))
             {
                 continue;
@@ -638,6 +690,7 @@ public class Dijkstra
             foreach (var (t, w) in graph[v])
             {
                 AxialCoor coor = map.HexAxialCoors[t];
+                // 如果这个邻接点有单位的话，跳过（即永远不会入队，不可到达点）
                 if (map.CoorWithUnit.Contains((coor, TeamEnum.Friend)) || map.CoorWithUnit.Contains((coor, TeamEnum.Enemy)))
                 {
                     continue;
@@ -660,6 +713,12 @@ public class Dijkstra
 
     }
 
+    /// <summary>
+    /// 这个重载仅用来计算两个点在权重均为1的图中的距离
+    /// </summary>
+    /// <param name="graph"></param>
+    /// <param name="start"></param>
+    /// <returns></returns>
     public static (float[] weights, int[] prev) FindShortestPaths(List<(int to, float weight)>[] graph, int start)
     {
         // 初始化要返回的两个序列
@@ -712,12 +771,23 @@ public class Dijkstra
 
     }
 
+    /// <summary>
+    /// 根据前驱节点序列建立单位沿着最短路径移动时的顺序
+    /// </summary>
+    /// <param name="prev">前驱节点序列，其结构是索引代表一个地格，而索引的位置储存着到达这个地格所经过的前一个地格的索引</param>
+    /// <param name="targetIndex">要到达的目标节点的索引</param>
+    /// <param name="coors">用来通过索引获得地格坐标实例的序列</param>
+    /// <param name="start">起点的索引</param>
+    /// <returns></returns>
     public static List<Vector2I> GetPath(int[] prev, int targetIndex, Array<Vector2I> coors, int start)
     {
+        // 先建立序列，并将目的地节点先插入序列
         List<Vector2I> path = new List<Vector2I>();
         path.Add(coors[targetIndex]);
+
         int index = targetIndex;
 
+        // 判断路径是否已经回到了起点
         while (prev[index] != start)
         {
             index = prev[index];
@@ -725,28 +795,35 @@ public class Dijkstra
 
         }
 
-        path.Reverse();
+        path.Reverse(); // 将序列反转，因为是从终点开始插入的
 
         return path;
     }
 
-
+    /// <summary>
+    /// 自动计算单位撤退路径，路径共三格，算法是计算三次邻接点，在六个邻接点中选择“离最近的敌人最远的”
+    /// </summary>
+    /// <param name="start"></param>
+    /// <param name="map"></param>
+    /// <param name="team"></param>
+    /// <returns></returns>
     public static Vector2I[] GetRetreatPath(AxialCoor start, Map map, TeamEnum team)
     {
-        Vector2I[] rPath = new Vector2I[3];
+        Vector2I[] rPath = new Vector2I[3]; // 撤退路径
         AxialCoor nowCoor = start;
         List<AxialCoor> enemyCoors = new List<AxialCoor>();
 
+        // 先得到所有敌方单位所在的地格
         foreach (var (coor, enemyTeam) in map.CoorWithUnit)
         {
             if (team != enemyTeam) enemyCoors.Add(coor);
         }
 
-
+        // 进行三次循环，先从起点开始计算邻接点，在邻接点里选择后以下一个选择的点为起点继续计算邻接点
         for (int i = 0; i < 3; i++)
         {
             List<AxialCoor> neighbors = nowCoor.GetNeighborCoor(map.HexAxialCoors);
-            neighbors.Shuffle();
+            neighbors.Shuffle();    // 打乱邻接点列表的一个扩展方法，为了让撤退路径多样化
             float bestMinDist = -1.0f;
 
             foreach (var neighbor in neighbors)
@@ -756,25 +833,32 @@ public class Dijkstra
                 {
                     float dist = GetTwoCoorDist(map.HexAxialCoors.IndexOf(neighbor), map.HexAxialCoors.IndexOf(enemy), map.GraphForRPath);
 
-                    if (dist < minDist) minDist = dist;
+                    if (dist < minDist) minDist = dist; // 这里确定距离遍历到的邻接点最近的敌方单位（直接确定这个最短距离就行）
 
                 }
 
+                // 每次有邻接点离上面确定好的minDist更远的就将这个邻接点加入撤退路径（有更远的会更新，因为是通过索引赋值的而不是Add方法）
                 if (minDist > bestMinDist)
                 {
                     rPath[i] = neighbor.AxialToOffset();
                     //GD.Print(neighbor.AxialToOffset());
+                    // 更新状态
                     nowCoor = neighbor;
                     bestMinDist = minDist;
                 }
             }
-
-
         }
 
         return rPath;
     }
 
+    /// <summary>
+    /// 获得两个顶点之间的最短路径
+    /// </summary>
+    /// <param name="start"></param>
+    /// <param name="end"></param>
+    /// <param name="graph"></param>
+    /// <returns></returns>
     public static float GetTwoCoorDist(int start, int end, List<(int to, float weight)>[] graph)
     {
         var (weights, _) = FindShortestPaths(graph, start);

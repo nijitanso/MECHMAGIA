@@ -7,10 +7,9 @@ using APC = ActionProcessor.AttackProcessor;
 
 public partial class Counter : Area2D
 {
-    //	这些数值将从数值类中获取
+    //	UnitInfo类是每一个算子用来储存单位数据的数据类
     public UnitInfo UnitInfo { get; set; } = new UnitInfo();
 
-    private Array<Vector2I> _hexOffsetCoors;    // 没看出来有什么用
 
     // 对节点的引用
     private Label _attackPointLabel;
@@ -20,7 +19,6 @@ public partial class Counter : Area2D
     private Node2D _upperLayer;
     private Map _map;
     private Main _main;
-    private MapInteraction _mapInteraction;
     private Sprite2D _bodySprite2D;
 
     // 算子对自身大小信息的储存，用于绘制鼠标悬停和选中边框
@@ -34,7 +32,6 @@ public partial class Counter : Area2D
     public bool IsHovering { get; private set; } = false;
     public bool IsSelected { get; private set; } = false;
     public bool IsMultiSelect { get; set; } = false;
-    private Vector2 _newPosition;
 
     public Vector2I[] RetreatPath { get; set; }
 
@@ -46,7 +43,6 @@ public partial class Counter : Area2D
     {
         // 获取引用
         _map = GetNode<Map>("/root/Main/Map");
-        _mapInteraction = GetNode<MapInteraction>("/root/Main/Map/MapInteraction");
         _attackPointLabel = GetNode<Label>("AttackPointLabel");
         _defendPointLabel = GetNode<Label>("DefendPointLabel");
         _movePointLabel = GetNode<Label>("MovePointLabel");
@@ -71,7 +67,7 @@ public partial class Counter : Area2D
         // TODO：这里各种事件的订阅的范式不标准（应该在订阅者那边订阅，而不是发布者），考虑重构成本（或许可以实现一个事件总线）并且注意以后的事件订阅
 
 
-        _main.UnitsUpdate += SetRetreatPath;
+        _main.UnitsUpdate += SetRetreatPath;    // 地图上的算子状态有变时更新自己的撤退路线，以免过期导致撤退有问题
 
         // 当鼠标进入算子时触发此事件
         MouseEntered += HoveringHighlight;  // 调用自己的边框高亮方法
@@ -92,15 +88,15 @@ public partial class Counter : Area2D
         // 当算子被选中时触发事件，这里的绑定顺序一定不能调换，因为是先清除上一次选中时显示的绿色高亮再显示新的
         SelectUnit += _map.DisclickCellForUnit;
         SelectUnit += MouseManager.Inst.SelectSwitchToCounter;
-        SelectUnit += MouseManager.Inst.SetSelectedUnit;
+        SelectUnit += MouseManager.Inst.SetSelectedUnits;
         SelectUnit += _map.GetHexMpList;    // 调用计算最小路径的方法，获取算子移动范围，并显示绿色高光
         SelectUnit += _map.ShowZoc;
 
         DeselectUnit += _map.RemoveGreen;
         DeselectUnit += _map.RemoveZoc;
-        DeselectUnit += MouseManager.Inst.SetSelectedUnitToNull;
+        DeselectUnit += MouseManager.Inst.ClearSelectedUnits;
 
-        MultiSelect += _map.RemoveGreen;
+        MultiSelect += _map.RemoveGreen;    // 当此时算子是被多选选中时（即Ctrl被按下时）移除绿色高光（因为算子在多选状态不能移动）
 
         APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
@@ -114,21 +110,20 @@ public partial class Counter : Area2D
 
     }
 
+    /// <summary>
+    /// 对单位状态进行初始化
+    /// </summary>
     public void Init()
     {
-        //GD.Print(UnitInfo.Coor);
+        // 设置位置
         Position = _map.MapToLocal(UnitInfo.Coor);
-        _newPosition = Position;
 
-
+        // 设置算子纹理上的数值数字
         _attackPointLabel.Text = UnitInfo.AP.ToString();
         _defendPointLabel.Text = UnitInfo.DP.ToString();
         _movePointLabel.Text = UnitInfo.MP.ToString();
 
-
-        _hexOffsetCoors = _map.GetUsedCells();
-
-
+        // 根据阵营设置自己的纹理颜色
         switch (UnitInfo.Team)
         {
             case TeamEnum.Friend:
@@ -148,15 +143,21 @@ public partial class Counter : Area2D
 
     }
 
+    /// <summary>
+    /// 设置单位的撤退路线
+    /// </summary>
+    /// <param name="_"></param>
     private void SetRetreatPath(Array<Counter> _)
     {
-        if (!IsInsideTree()) return;
+        if (!IsInsideTree()) return;    // 当算子已不在场景树上时（一般是被歼灭后移出树）返回
+
         RetreatPath = Dijkstra.GetRetreatPath(UnitInfo.CoorOfAxial, _map, UnitInfo.Team);
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
+        // 根据Ctrl键的按下情况设置单位是否处于多选状态
         if (Input.IsKeyPressed(Key.Ctrl))
         {
             IsMultiSelect = true;
@@ -167,11 +168,17 @@ public partial class Counter : Area2D
         }
     }
 
+    /// <summary>
+    /// 事件处理器，响应MouseEntered事件，设置MouseManager中的悬停单位
+    /// </summary>
     public void SetHoveringUnit()
     {
         MouseManager.Inst.SetHoveringUnit(UnitInfo);
     }
 
+    /// <summary>
+    /// 事件处理器，响应MouseExited事件，设置MouseManager中的悬停单位为ID为-1的空单位
+    /// </summary>
     public void SetHoveringUnitToNull()
     {
         MouseManager.Inst.SetHoveringUnitToNull();
@@ -186,9 +193,6 @@ public partial class Counter : Area2D
         IsHovering = true;
         Scale = new Vector2(1.07f, 1.07f);
         QueueRedraw();
-
-        
-        
     }
 
     /// <summary>
@@ -201,12 +205,10 @@ public partial class Counter : Area2D
         QueueRedraw();
     }
     /// <summary>
-    /// 重写的_Draw方法，每次调用QueueRedraw时都会重新绘制游戏画面。注意更改状态不需要对画布进行清除，只需要“不绘制“即可，因为_Draw方法本来就是每帧都被调用的
+    /// 重写的_Draw方法，每次调用QueueRedraw时都会重新绘制游戏画面。注意更改状态不需要对画布进行清除，只需要“不绘制”即可，因为_Draw方法本来就是每帧都被调用的
     /// </summary>
     public override void _Draw()
     {
-
-
         if (IsHovering && !IsSelected)
         {
             // 在算子的边缘处绘制白色虚线，注意以这种方法绘制的内容会被算子的纹理覆盖
@@ -214,7 +216,6 @@ public partial class Counter : Area2D
             DrawDashedLine(_topLeftPosition, _downLeftPosition, Color.Color8(255, 255, 255), width: 4.0f);
             DrawDashedLine(_downLeftPosition, _downRightPosition, Color.Color8(255, 255, 255), width: 4.0f);
             DrawDashedLine(_downRightPosition, _topRightPosition, Color.Color8(255, 255, 255), width: 4.0f);
-
         }
 
         if (IsSelected)
@@ -227,6 +228,10 @@ public partial class Counter : Area2D
         }
     }
 
+    /// <summary>
+    /// 重写_Input方法，用来检测鼠标左键对算子的选中
+    /// </summary>
+    /// <param name="event"></param>
     public override void _Input(InputEvent @event)
     {
         if (@event is InputEventMouseButton mouseEvent)
@@ -235,21 +240,19 @@ public partial class Counter : Area2D
             {
                 if (!IsSelected)
                 {
-                    // 和HoveringHighlight方法差不多的处理，更新状态和重绘，但多了触发事件的一行
                     Select();
                 }
                 else
                 {
                     Deselect();
                 }
-
-
             }
         }
-
-       
     }
 
+    /// <summary>
+    /// 将本单位选中，触发事件SelectUnit并绘制选中边框。SelectUnit事件绑定了很多事件处理器
+    /// </summary>
     public void Select()
     {
         OnSelectUnit();
@@ -263,6 +266,9 @@ public partial class Counter : Area2D
         QueueRedraw();
     }
 
+    /// <summary>
+    /// 将本单位取消选中，和Select方法差不多，但是格式不是很统一，能跑就行了
+    /// </summary>
     public void Deselect()
     {
         MouseManager.Inst.SelectState = MouseManager.SelectStateEnum.Null;
@@ -273,7 +279,7 @@ public partial class Counter : Area2D
     }
 
     /// <summary>
-    /// 多选时将不会将其他算子取消选择
+    /// 事件处理器，响应SwitchCounter事件，多选状态时不会将其他算子取消选择
     /// </summary>
     public void DeselectForMultiSelect()
     {
@@ -295,17 +301,18 @@ public partial class Counter : Area2D
     }
 
     /// <summary>
-    /// 如果算子处于被选中状态，将算子移动到传入的地格坐标处，同时取消选中（调用Deselect方法）
+    /// 如果算子处于被选中状态，将算子移动到传入的地格坐标处，同时取消选中（调用Deselect方法），并且触发MoveUnit事件通知Main节点更新全局算子状态
     /// </summary>
     /// <param name="coor"></param>
     public void Move(Array<Vector2I> path)
     {
         if (!IsSelected) return;
 
-        _tween = GetTree().CreateTween();
+        _tween = GetTree().CreateTween();   // 创建一个补间实例，实现算子的平滑移动
 
-        float time = 0.2f / path.Count;
+        float time = 0.2f / path.Count; // 移动总用时为0.2秒
 
+        // 遍历移动路径，将每一次补间都加入Tween实例的队列中（会自动按顺序执行）
         foreach (var coor in path)
         {
             UnitInfo.Coor = coor;
@@ -317,6 +324,11 @@ public partial class Counter : Area2D
         OnMoveUnit();
     }
 
+    /// <summary>
+    /// 根据本单位的撤退路线进行撤退的移动，和Move方法逻辑基本类似，但是有一个参数调整撤退的格数
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="num">需要撤退的格数</param>
     public void Retreat(Vector2I[] path, int num)
     {
         if (!IsInsideTree()) return;
@@ -334,25 +346,25 @@ public partial class Counter : Area2D
         OnMoveUnit();
     }
 
+    /// <summary>
+    /// 降低本单位的AP
+    /// </summary>
+    /// <param name="level"></param>
     public void LossAP(int level)
     {
         UnitInfo.AP -= level;
         _attackPointLabel.Text = UnitInfo.AP.ToString();
-
     }
 
+    /// <summary>
+    /// 事件处理器，响应事件APC的Attack事件。处理产生的战斗结果
+    /// </summary>
     public void ProcessCR()
     {
-        if(APC.Inst.Attackers.Count == 0)
-        {
-            GD.Print("空");
-        }
-
-        //GD.Print(RetreatPath[0]);
+        // 检测本单位是否在战斗处理器记录的防守单位序列中
         if (APC.Inst.Defenders.Contains(this.UnitInfo))
         {
-            
-
+            // 用战斗结果这个枚举来决定需要执行的操作（撤退或被歼灭）
             switch (APC.Inst.CR)
             {
                 case APC.CREnum.DR:
@@ -372,9 +384,9 @@ public partial class Counter : Area2D
             }
         }
 
+        // 同上
         if (APC.Inst.Attackers.Contains(this.UnitInfo))
         {
-            GD.Print("进攻方撤退");
             switch (APC.Inst.CR)
             {
                 case APC.CREnum.AR:
