@@ -81,6 +81,7 @@ public partial class Main : Node2D
     public void RemoveCounterFromTree(Counter counter)
     {
         counter.UnitInfo.Coor = new Vector2I(-999, -999);   // 移动到“弃牌堆”（不是
+        counter.IsMultiSelect = true;
         RemoveChild(counter);
         Units.Remove(counter);
 

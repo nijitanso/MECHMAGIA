@@ -2,6 +2,7 @@ using Godot;
 using System;
 using Data;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public partial class MouseManager : Node
 {
@@ -50,6 +51,27 @@ public partial class MouseManager : Node
     public void HoverSwitchToMap()
     {
         HoverState = HoverStateEnum.Map;
+    }
+
+    public async void ShowTestMessage()
+    {
+        while (true)
+        {
+            string a = "";
+            foreach (var unit in SelectedUnits)
+            {
+                a += unit.ID.ToString();
+            }
+            if (a != "")
+            {
+                GD.Print(a);
+            }
+            
+
+            await Task.Delay(500);
+        }
+
+        
     }
 
     /// <summary>
@@ -104,6 +126,15 @@ public partial class MouseManager : Node
     }
 
     /// <summary>
+    /// 事件处理器，响应Counter的MultiDeselectUnit事件。从SelectedUnits序列中移除事件传入的算子
+    /// </summary>
+    /// <param name="unit"></param>
+    public void RemoveSelectedUnits(UnitInfo unit)
+    {
+        SelectedUnits.Remove(unit);
+    }
+
+    /// <summary>
     /// 设置悬停单位为ID为-1的空单位
     /// </summary>
     public void SetHoveringUnitToNull()
@@ -147,6 +178,9 @@ public partial class MouseManager : Node
     {
         // 等待所有节点被加载进场景树后进行初始化
         CallDeferred(nameof(InitializeNode));
+
+        ShowTestMessage();
+
     }
 
     /// <summary>
@@ -169,6 +203,8 @@ public partial class MouseManager : Node
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
+        
+
         // 这里面是非常过时的代码
         ClickedMouseButton = (long)(Input.GetMouseButtonMask());
         if (ClickedMouseButton == 1)
@@ -194,6 +230,8 @@ public partial class MouseManager : Node
 
         if (mouseClickTimeShower != null)
             mouseClickTimeShower.Text = $"鼠标左键按下时长：{MouseLeftHoldingTime:F2}";
+
+        
     }
 
 

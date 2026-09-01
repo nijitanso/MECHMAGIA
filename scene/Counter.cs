@@ -95,8 +95,9 @@ public partial class Counter : Area2D
         DeselectUnit += _map.RemoveGreen;
         DeselectUnit += _map.RemoveZoc;
         DeselectUnit += MouseManager.Inst.ClearSelectedUnits;
+        MultiDeselectUnit += MouseManager.Inst.RemoveSelectedUnits;
 
-        MultiSelect += _map.RemoveGreen;    // 当此时算子是被多选选中时（即Ctrl被按下时）移除绿色高光（因为算子在多选状态不能移动）
+        MultiSelectEvent += _map.RemoveGreen;    // 当此时算子是被多选选中时（即Ctrl被按下时）移除绿色高光（因为算子在多选状态不能移动）
 
         APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
@@ -164,7 +165,7 @@ public partial class Counter : Area2D
         }
         else
         {
-            IsMultiSelect= false;
+            IsMultiSelect = false;
         }
     }
 
@@ -238,14 +239,15 @@ public partial class Counter : Area2D
         {
             if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && IsHovering)
             {
-                if (!IsSelected)
+                if (IsMultiSelect)
                 {
-                    Select();
+                    MultiSelect();
                 }
                 else
                 {
-                    Deselect();
+                    Select();
                 }
+
             }
         }
     }
@@ -255,15 +257,35 @@ public partial class Counter : Area2D
     /// </summary>
     public void Select()
     {
+        // 判断此时有无选中单位，避免下面索引越界
+        if (MouseManager.Inst.SelectedUnits.Count != 0)
+        {
+            // 如果在多选状态时试图选择不同阵营的算子则返回
+            if (MouseManager.Inst.SelectedUnits[0].Team != UnitInfo.Team && IsMultiSelect) return;
+        }
+
+
         OnSelectUnit();
 
         if (IsMultiSelect)
         {
-            OnMultiSelect();
+            OnMultiSelectEvent();
         }
 
         IsSelected = true;
         QueueRedraw();
+    }
+
+    public void MultiSelect()
+    {
+        if (IsSelected)
+        {
+            Deselect();
+        }
+        else
+        {
+            Select();
+        }
     }
 
     /// <summary>
@@ -275,7 +297,17 @@ public partial class Counter : Area2D
         IsSelected = false;
         QueueRedraw();
 
-        OnDeselectUnit();
+        // 在多选和单选的情况下取消选择分别触发不同的事件（单选时会清除整个选中序列，然后重新加入被选中的。而多选时只会将指定的单位从选中序列中移除）
+        if (IsMultiSelect)
+        {
+            OnMultiDeselectUnit();
+        }
+        else
+        {
+
+            OnDeselectUnit();
+        }
+
     }
 
     /// <summary>
@@ -284,6 +316,7 @@ public partial class Counter : Area2D
     public void DeselectForMultiSelect()
     {
         if (IsMultiSelect) return;
+
         Deselect();
     }
 
@@ -338,6 +371,14 @@ public partial class Counter : Area2D
 
         for (int i = 0; i < num; i++)
         {
+            // 如果撤退路径不支持撤退的格数（即有没被赋值的初始元素），说明撤退路径被控制区或者敌方单位挡住，则将算子歼灭（移出场景树）
+            if (path[i] == new Vector2I())
+            {
+                OnRemoveCounter();
+                _tween.Kill();  // 杀死补间实例，避免算子被歼灭后无法加入动画队列导致报错（不可以_tween = null;因为真实的那个实例还在内存中游荡，并试图播放不存在的动画）
+                break;
+            }
+
             UnitInfo.Coor = path[i];
             _tween.TweenProperty(this, "position", _map.MapToLocal(path[i]), time);
 
@@ -424,6 +465,13 @@ public partial class Counter : Area2D
 
     [Signal] public delegate void DeselectUnitEventHandler();
 
+    protected virtual void OnMultiDeselectUnit()
+    {
+        EmitSignal(SignalName.MultiDeselectUnit, this.UnitInfo);
+    }
+
+    [Signal] public delegate void MultiDeselectUnitEventHandler(UnitInfo unit);
+
     protected virtual void OnMoveUnit()
     {
         EmitSignal(SignalName.MoveUnit);
@@ -439,10 +487,10 @@ public partial class Counter : Area2D
     [Signal] public delegate void RemoveCounterEventHandler(Counter counter);
 
 
-    protected virtual void OnMultiSelect()
+    protected virtual void OnMultiSelectEvent()
     {
-        EmitSignal(SignalName.MultiSelect);
+        EmitSignal(SignalName.MultiSelectEvent);
     }
 
-    [Signal] public delegate void MultiSelectEventHandler();
+    [Signal] public delegate void MultiSelectEventEventHandler();
 }
