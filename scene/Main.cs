@@ -23,8 +23,12 @@ public partial class Main : Node2D
 
         UnitDataJson.Initialize();  // 从JSON中获取单位的数据，将数据存储到UnitData这个静态类中（但似乎这个类意义并不大，因为数据全在UnitInfo实例里）
 
+        _map.StackReady += BindCounterWithStack;  // 将算子与栈绑定的方法绑定到Map的StackReady事件上，这样当栈准备好时就会调用这个方法
+        _map.QuitStack += RestoreCounterModulate;  // 将算子Modulate还原的方法绑定到Map的QuitStack事件上，这样当鼠标离开栈时就会调用这个方法
 
         Init(); // 初始化
+
+
 
     }
 
@@ -57,6 +61,8 @@ public partial class Main : Node2D
             counter.MoveUnit += OnUnitsUpdate;
             // 单位承受歼灭CR时触发该事件
             counter.RemoveCounter += RemoveCounterFromTree;
+            counter.OrderStack += OrderingStack;
+
 
             if (counter != null)
             {
@@ -69,9 +75,11 @@ public partial class Main : Node2D
                 GD.Print("有counter实例化失败！");
             }
 
-            OnUnitsUpdate();  // 算子实例化完毕，通知其他节点更新算子状态
 
         }
+
+        OnUnitsUpdate();  // 算子实例化完毕，通知其他节点更新算子状态
+
     }
 
     /// <summary>
@@ -88,13 +96,57 @@ public partial class Main : Node2D
         OnUnitsUpdate();
     }
 
+    public void OrderingStack(Vector2I coor)
+    {
+        UnitStack stack = _map.UnitStacks[coor];
+
+        foreach (var unit in stack.Units)
+        {
+            Counter counter = Units.Find(u => u.UnitInfo == unit);
+            counter.ZIndex = stack.UnitIndexOf(unit);  // 将算子的ZIndex设为它在栈中的索引值，这样就可以实现算子堆叠的视觉效果
+
+            if (counter.ZIndex != stack.GetCount() - 1)
+            {
+                counter.CollisionShape2D.Disabled = true;  // 如果不是栈顶的算子，就禁用它的碰撞体，这样就不会被鼠标选中
+            }
+            else
+            {
+                counter.CollisionShape2D.Disabled = false;  // 如果是栈顶的算子，就启用它的碰撞体，这样就可以被鼠标选中
+            }
+        }
+    }
+
+    public void BindCounterWithStack(Godot.Collections.Dictionary<Vector2I, UnitStack> stacks)
+    {
+        foreach (var stack in stacks.Values)
+        {
+            Counter counter = Units.Find(u => u.UnitInfo == stack.Units[0]);
+            counter.ParentStack = stack;
+        }
+    }
+
+    public void RestoreCounterModulate()
+    {
+        foreach (var counter in Units)
+        {
+            counter.Modulate = new Color(1, 1, 1, 1);
+        }
+    }
+
+    public void HighlightFormStack(UnitStack stack, UnitInfo hoveringUnit)
+    {
+        if (stack == null) return;
+
+        stack.HighLight(Units, hoveringUnit);
+    }
+
     public void OnUnitsUpdate()
     {
         // 因为要传一个序列，所以要转成Godot的内置序列（可以被Variant类型容纳），接收参数的一方再转回C#原生类型
-        EmitSignal(SignalName.UnitsUpdate, new Godot.Collections.Array<Counter>(Units));  
+        EmitSignal(SignalName.UnitsUpdate, new Godot.Collections.Array<Counter>(Units));
     }
 
-  
+
     [Signal] public delegate void UnitsUpdateEventHandler(Godot.Collections.Array<Counter> units);
 
 

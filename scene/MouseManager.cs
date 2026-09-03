@@ -45,6 +45,16 @@ public partial class MouseManager : Node
         HoverState = HoverStateEnum.Counter;
     }
 
+    public void SetIsStackHoveredAsTrue()
+    {
+        IsStackHovered = true;
+    }
+
+    public void SetIsStackHoveredAsFalse()
+    {
+        IsStackHovered = false;
+    }
+
     /// <summary>
     /// 事件处理器，响应算子的MouseExited事件，切换鼠标的悬停实体类型为地格（这里以后内容多了后可能逻辑有问题，因为离开了算子并不代表鼠标一定在地格之上）
     /// </summary>
@@ -57,6 +67,10 @@ public partial class MouseManager : Node
     {
         while (true)
         {
+            GD.Print(HoverState);
+            await Task.Delay(500);
+
+            /*
             string a = "";
             foreach (var unit in SelectedUnits)
             {
@@ -66,10 +80,12 @@ public partial class MouseManager : Node
             {
                 GD.Print(a);
             }
-            
 
-            await Task.Delay(500);
+            */
         }
+
+        
+
 
         
     }
@@ -107,6 +123,8 @@ public partial class MouseManager : Node
     {
         HoveringUnit = unit;
     }
+
+
 
     /// <summary>
     /// 事件处理器，响应Counter的SelectUnit事件。将事件传入的UnitInfo实例加入SelectedUnits序列中
@@ -160,6 +178,8 @@ public partial class MouseManager : Node
     public HoverStateEnum HoverState { get; set; }
     public SelectStateEnum SelectState { get; set; } = SelectStateEnum.Null;
 
+    public bool IsStackHovered { get; set; } = false;
+
     // 被选中或悬停的实例的具体属性
     public Vector2I SelectedMapCoor { get; set; }
     public List<UnitInfo> SelectedUnits { get; set; } = new List<UnitInfo>();
@@ -179,7 +199,7 @@ public partial class MouseManager : Node
         // 等待所有节点被加载进场景树后进行初始化
         CallDeferred(nameof(InitializeNode));
 
-        ShowTestMessage();
+        //ShowTestMessage();
 
     }
 
@@ -203,7 +223,7 @@ public partial class MouseManager : Node
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        
+
 
         // 这里面是非常过时的代码
         ClickedMouseButton = (long)(Input.GetMouseButtonMask());
@@ -231,8 +251,17 @@ public partial class MouseManager : Node
         if (mouseClickTimeShower != null)
             mouseClickTimeShower.Text = $"鼠标左键按下时长：{MouseLeftHoldingTime:F2}";
 
-        
+
     }
+
+
+
+    public void OnEnterCounter()
+    {
+        EmitSignal(SignalName.EnterCounter);
+    }
+
+    [Signal] public delegate void EnterCounterEventHandler();
 
 
     public void OnSwitchCounter()

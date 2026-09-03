@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://dapib2lt27gg8"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gk6v8"]
+size = Vector2(50, 50)
+
+[node name="StackMask" type="Area2D" unique_id=1222075447]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1021759352]
+shape = SubResource("RectangleShape2D_gk6v8")

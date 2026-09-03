@@ -15,7 +15,7 @@ public partial class Counter : Area2D
     private Label _attackPointLabel;
     private Label _defendPointLabel;
     private Label _movePointLabel;
-    private CollisionShape2D _collisionShape2D;
+    public CollisionShape2D CollisionShape2D { get; set; }
     private Node2D _upperLayer;
     private Map _map;
     private Main _main;
@@ -27,6 +27,7 @@ public partial class Counter : Area2D
     private Vector2 _downLeftPosition;
     private Vector2 _downRightPosition;
     private Vector2 _size;
+    public UnitStack ParentStack { get; set; }
 
     // 状态属性
     public bool IsHovering { get; private set; } = false;
@@ -46,7 +47,7 @@ public partial class Counter : Area2D
         _attackPointLabel = GetNode<Label>("AttackPointLabel");
         _defendPointLabel = GetNode<Label>("DefendPointLabel");
         _movePointLabel = GetNode<Label>("MovePointLabel");
-        _collisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
+        CollisionShape2D = GetNode<CollisionShape2D>("CollisionShape2D");
         _upperLayer = GetNode<Node2D>("UpperLayer");
         _bodySprite2D = GetNode<Sprite2D>("BodySprite2D");
         _main = GetParent<Main>();
@@ -56,7 +57,7 @@ public partial class Counter : Area2D
 
 
         // 计算算子大小
-        _size = _collisionShape2D.Shape.GetRect().Size;
+        _size = CollisionShape2D.Shape.GetRect().Size;
         _topLeftPosition = new Vector2(-_size.X / 2.0f, -_size.Y / 2.0f);
         _topRightPosition = new Vector2(_size.X / 2.0f, -_size.Y / 2.0f);
         _downLeftPosition = new Vector2(-_size.X / 2.0f, _size.Y / 2.0f);
@@ -70,9 +71,11 @@ public partial class Counter : Area2D
         _main.UnitsUpdate += SetRetreatPath;    // 地图上的算子状态有变时更新自己的撤退路线，以免过期导致撤退有问题
 
         // 当鼠标进入算子时触发此事件
+        //MouseEntered += MouseManager.Inst.OnEnterCounter;  // 调用自己的边框高亮方法
         MouseEntered += HoveringHighlight;  // 调用自己的边框高亮方法
         MouseEntered += MouseManager.Inst.HoverSwitchToCounter; // 调用MouseManager的方法，将悬停状态改为算子MouseEntered
         MouseEntered += SetHoveringUnit;
+        MouseEntered += HighlightFormStack;
 
         // 当鼠标离开算子时触发此事件，具体的事件处理器逻辑相同，不再赘述
         MouseExited += NotHoveringHighlight;
@@ -81,8 +84,11 @@ public partial class Counter : Area2D
 
         // 当有算子被选择时触发此事件，没有被选中的算子将会调用自身的Deselect方法（在SwitchDeselect方法内做判断并调用）
         MouseManager.Inst.SwitchCounter += DeselectForMultiSelect;
+        MouseManager.Inst.EnterCounter += OnMouseExited;
 
-        _map.SelectCoor += Move;    // 当地格被选中时触发此事件
+        // Map的事件
+        _map.SelectCoor += MoveForMarch;    // 当地格被选中时触发此事件
+        _map.EnterStack += EnterStack;
         _map.ClickCoor += Deselect;
 
         // 当算子被选中时触发事件，这里的绑定顺序一定不能调换，因为是先清除上一次选中时显示的绿色高亮再显示新的
@@ -101,6 +107,7 @@ public partial class Counter : Area2D
 
         APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
+
 
 
         QueueRedraw();  // 这个重绘可能时实现阴影时留下的，现在有了更好的实现方法，但还是不敢动这行
@@ -177,6 +184,7 @@ public partial class Counter : Area2D
         MouseManager.Inst.SetHoveringUnit(UnitInfo);
     }
 
+
     /// <summary>
     /// 事件处理器，响应MouseExited事件，设置MouseManager中的悬停单位为ID为-1的空单位
     /// </summary>
@@ -191,8 +199,9 @@ public partial class Counter : Area2D
     /// </summary>
     public void HoveringHighlight()
     {
+        //GD.Print("2");
         IsHovering = true;
-        Scale = new Vector2(1.07f, 1.07f);
+        //Scale = new Vector2(1.05f, 1.05f);
         QueueRedraw();
     }
 
@@ -201,8 +210,10 @@ public partial class Counter : Area2D
     /// </summary>
     public void NotHoveringHighlight()
     {
+        //GD.Print("1");
+
         IsHovering = false;
-        Scale = new Vector2(1.0f, 1.0f);
+        //Scale = new Vector2(1.0f, 1.0f);
         QueueRedraw();
     }
     /// <summary>
@@ -335,11 +346,13 @@ public partial class Counter : Area2D
 
     /// <summary>
     /// 如果算子处于被选中状态，将算子移动到传入的地格坐标处，同时取消选中（调用Deselect方法），并且触发MoveUnit事件通知Main节点更新全局算子状态
+    /// 并返回算子移动后的全局坐标
     /// </summary>
     /// <param name="coor"></param>
-    public void Move(Array<Vector2I> path)
+    public Vector2 Move(Array<Vector2I> path)
     {
-        if (!IsSelected) return;
+        if (!IsSelected) return new Vector2(-999, -999);
+        Vector2 position = new Vector2();
 
         _tween = GetTree().CreateTween();   // 创建一个补间实例，实现算子的平滑移动
 
@@ -349,13 +362,52 @@ public partial class Counter : Area2D
         foreach (var coor in path)
         {
             UnitInfo.Coor = coor;
-            _tween.TweenProperty(this, "position", _map.MapToLocal(coor), time);
+            position = _map.MapToLocal(coor);
+            _tween.TweenProperty(this, "position", position, time);
         }
 
         Deselect();
 
         OnMoveUnit();
+
+        return position;
     }
+
+    /// <summary>
+    /// 事件处理器，响应Map.SelectCoor事件。所以无返回值，将算子移动到传入的地格坐标处
+    /// </summary>
+    /// <param name="path"></param>
+    public void MoveForMarch(Array<Vector2I> path)
+    {
+        Move(path);
+    }
+
+    /// <summary>
+    /// 事件处理器，响应Map.EnterStack事件。将算子移动到传入的地格坐标处，并根据传入的index参数计算偏移量，避免算子重叠
+    /// </summary>
+    /// <param name="coor"></param>
+    /// <param name="index">算子在堆叠中的排序索引（就是List中的索引）</param>
+    /// <param name="path"></param>
+    public void EnterStack(Vector2I coor, UnitStack stack, Array<Vector2I> path)
+    {
+        if (!IsSelected) return;
+        ParentStack = stack;
+        int index = stack.UnitIndexOf(UnitInfo);
+        OnOrderStack(coor);
+
+        float offset = 4.0f * (index);
+        Vector2 position = Move(path);
+
+        Vector2 pos = new Vector2(position.X + offset, position.Y - offset);
+
+        _tween.TweenProperty(this, "position", pos, 0.05);
+    }
+
+    public void HighlightFormStack()
+    {
+        _main.HighlightFormStack(ParentStack, UnitInfo);
+    }
+
 
     /// <summary>
     /// 根据本单位的撤退路线进行撤退的移动，和Move方法逻辑基本类似，但是有一个参数调整撤退的格数
@@ -493,4 +545,20 @@ public partial class Counter : Area2D
     }
 
     [Signal] public delegate void MultiSelectEventEventHandler();
+
+    protected virtual void OnOrderStack(Vector2I coor)
+    {
+        EmitSignal(SignalName.OrderStack, coor);
+    }
+
+    [Signal] public delegate void OrderStackEventHandler(Vector2I coor);
+
+
+
+
+    protected virtual void OnMouseExited()
+    {
+        EmitSignal(SignalName.MouseExited);
+    }
+
 }

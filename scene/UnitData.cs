@@ -66,6 +66,7 @@ namespace Data
         public int AP { get; set; }
         public int DP { get; set; }
         public int MP { get; set; }
+        [JsonIgnore] public int StackIndex { get; set; } = 0;
         // 这个JsonIgnore特性表示它将在序列化时被JSON忽略，这个属性是用来拼装一些Godot特有的类型时所使用的
         [JsonIgnore]
         public Vector2I Coor

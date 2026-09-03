@@ -6,9 +6,6 @@
 [ext_resource type="Texture2D" uid="uid://d27gothm4ojcx" path="res://resource/UnitShadepng.png" id="2_fgcbg"]
 [ext_resource type="Script" uid="uid://do7bdduu6lv8x" path="res://scene/UpperLayer.cs" id="2_rrxse"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gk6v8"]
-size = Vector2(40, 38)
-
 [sub_resource type="LabelSettings" id="LabelSettings_qg2o6"]
 font = ExtResource("2_1p1vy")
 font_size = 8
@@ -24,29 +21,35 @@ font = ExtResource("2_1p1vy")
 font_size = 8
 font_color = Color(1, 1, 0, 1)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gk6v8"]
+size = Vector2(40, 38)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_534od"]
+size = Vector2(40, 3)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3hjv4"]
+size = Vector2(3, 37)
+
 [node name="Counter" type="Area2D" unique_id=1946488390]
 script = ExtResource("1_ldtc6")
 
-[node name="ShadeSprite2D" type="Sprite2D" parent="." unique_id=1927959802]
+[node name="ShadeSprite2D" type="Sprite2D" parent="." unique_id=1927959802 groups=["Texture"]]
 position = Vector2(1, 1)
 texture = ExtResource("2_fgcbg")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1479538056]
-shape = SubResource("RectangleShape2D_gk6v8")
-
-[node name="BodySprite2D" type="Sprite2D" parent="." unique_id=1066569474]
+[node name="BodySprite2D" type="Sprite2D" parent="." unique_id=1066569474 groups=["Texture"]]
 position = Vector2(-1, -1)
 texture = ExtResource("1_1h5m0")
 
-[node name="AttackPointLabel" type="Label" parent="." unique_id=157755779]
+[node name="AttackPointLabel" type="Label" parent="." unique_id=157755779 groups=["Texture"]]
 offset_left = -16.0
 offset_top = 8.0
 offset_right = -8.0
 offset_bottom = 16.0
-text = "7"
+text = "2"
 label_settings = SubResource("LabelSettings_qg2o6")
 
-[node name="DefendPointLabel" type="Label" parent="." unique_id=1666463729]
+[node name="DefendPointLabel" type="Label" parent="." unique_id=1666463729 groups=["Texture"]]
 offset_left = -3.0
 offset_top = 8.0
 offset_right = 5.0
@@ -54,7 +57,7 @@ offset_bottom = 16.0
 text = "5"
 label_settings = SubResource("LabelSettings_534od")
 
-[node name="MovePointLabel" type="Label" parent="." unique_id=1968472406]
+[node name="MovePointLabel" type="Label" parent="." unique_id=1968472406 groups=["Texture"]]
 offset_left = 9.0
 offset_top = 8.0
 offset_right = 17.0
@@ -64,3 +67,14 @@ label_settings = SubResource("LabelSettings_3hjv4")
 
 [node name="UpperLayer" type="Node2D" parent="." unique_id=1021880133]
 script = ExtResource("2_rrxse")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1479538056]
+shape = SubResource("RectangleShape2D_gk6v8")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="." unique_id=1308130624]
+position = Vector2(0, 18)
+shape = SubResource("RectangleShape2D_534od")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="." unique_id=694967203]
+position = Vector2(-19, 0)
+shape = SubResource("RectangleShape2D_3hjv4")
