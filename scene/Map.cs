@@ -2,16 +2,42 @@ using Data;
 using Godot;
 using HexGrid;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime;
+using System.Threading.Tasks;
 using APC = ActionProcessor.AttackProcessor;
 using MM = MouseManager;
 public partial class Map : TileMapLayer
 {
+    public async void ShowTestMessage()
+    {
+        while (true)
+        {
+            GD.Print(UnitStacks.Count);
+            await Task.Delay(500);
+
+            /*
+            string a = "";
+            foreach (var unit in SelectedUnits)
+            {
+                a += unit.ID.ToString();
+            }
+            if (a != "")
+            {
+                GD.Print(a);
+            }
+
+            */
+        }
+
+    }
+
+
     //  服务于最小路径算法的字段序列
     private Godot.Collections.Array<Vector2I> _hexOffsetCoors;    // 地格的偏移坐标数组（用数组是因为返回地格序列的方法的返回值是Godot内置的泛型数组，还是用列表泛型更方便，性能应该也差不到哪里去）
     public List<AxialCoor> HexAxialCoors { get; set; } = new List<AxialCoor>();   // 地格的轴向坐标列表
@@ -94,6 +120,9 @@ public partial class Map : TileMapLayer
         // 响应UnitsUpdate事件，更新算子在地图上的状态
         _main.UnitsUpdate += UnitInitAndUPdate;
         _main.UnitsUpdate += AddGraph;
+
+
+        //ShowTestMessage();
 
     }
 
@@ -289,6 +318,18 @@ public partial class Map : TileMapLayer
             // 判断右键
             if (mouseEvent.ButtonIndex == MouseButton.Right && mouseEvent.Pressed)
             {
+                if (MM.Inst.SelectedUnits.Count == 0)
+                {
+                    _mapInteraction.DisclickCell(PreciousClickedCell);
+                    PreciousClickedCell = new Vector2I(-999, -999);
+                    OnRightBotton();
+                }
+                else if (!_canMoveCoors.Contains(mouseCoorPos) && !_attackIcon.Visible)
+                {
+                    OnRightBotton();
+                }
+
+                
                 // 检测攻击图标是否可见和是否满足攻击条件
                 if (_attackIcon.Visible && APC.Inst.AttackCheck(friends, enemies))
                 {
@@ -297,7 +338,6 @@ public partial class Map : TileMapLayer
                 // 不能进攻就移动算子
                 else
                 {
-                    FormAStack(mouseCoorPos);
                     OnSelectCoor(mouseCoorPos);
                 }
 
@@ -312,12 +352,37 @@ public partial class Map : TileMapLayer
         }
     }
 
+    public void ProcessUnitRetreat(Vector2I newCoor, Vector2I oldCoor, Counter counter)
+    {
+        AxialCoor axialCoor = AxialCoor.OffsetToAxial(newCoor);
+        UnitStack stack;
+        UnitInfo unit = counter.UnitInfo;
+
+        TeamEnum friendTeam = (unit.Team == TeamEnum.Enemy) ? TeamEnum.Enemy : TeamEnum.Friend;
+
+        if (!CoorWithUnit.Contains((axialCoor, friendTeam)))
+        {
+            stack =  FormAStackForRetreat(newCoor, oldCoor, unit);
+            GD.Print("形成堆叠");
+        }
+        else
+        {
+            stack = EnterAStackForRetreat(newCoor, oldCoor, unit);
+            GD.Print("进入堆叠");
+        }
+
+        counter.FormStack(stack);
+    }
+
     /// <summary>
     /// 将当前选中的算子加入到鼠标悬停的地格的算子堆叠中，并触发OnEnterStack事件通知Counter
     /// </summary>
     /// <param name="coor"></param>
     public void EnterAStack(Vector2I coor)
     {
+        if (!_canMoveCoors.Contains(coor)) return;
+        if (MM.Inst.SelectedUnits.Count == 0 || MM.Inst.SelectedUnits.Count > 1) return;
+
         UnitStack stack = UnitStacks[coor];
         UnitInfo unit = MM.Inst.SelectedUnits[0];
 
@@ -328,17 +393,42 @@ public partial class Map : TileMapLayer
         OnEnterStack(coor, stack);
     }
 
+    public UnitStack EnterAStackForRetreat(Vector2I newCoor, Vector2I oldCoor, UnitInfo unit)
+    {
+
+        UnitStack stack = UnitStacks[newCoor];
+
+        QuitAStackForRetreat(unit, oldCoor);   // 先从原来的堆叠中移除
+        stack.AddUnit(unit);
+
+        return stack;
+    }
+
     /// <summary>
     /// 在进入新地格时创建一个新的算子堆叠，并将当前选中的算子加入到该堆叠中
     /// </summary>
     /// <param name="coor"></param>
-    public void FormAStack(Vector2I coor)
+    public UnitStack FormAStack(Vector2I coor)
     {
-        // 判断移动到的地格上是否有算子，如果有就不创建新的堆叠
-        AxialCoor axialCoor = AxialCoor.OffsetToAxial(coor);
-        if (CoorWithUnit.Contains((axialCoor, TeamEnum.Friend)) || CoorWithUnit.Contains((axialCoor, TeamEnum.Enemy))) return;
 
-        UnitStacks[coor] = new UnitStack(MM.Inst.SelectedUnits[0], MapToLocal(coor), _main);
+        UnitInfo unit = MM.Inst.SelectedUnits[0];
+
+        QuitAStack(unit);   // 先从原来的堆叠中移除
+
+        UnitStacks[coor] = new UnitStack(unit, MapToLocal(coor), _main);
+
+        return UnitStacks[coor];
+
+    }
+
+    public UnitStack FormAStackForRetreat(Vector2I newCoor, Vector2I oldCoor, UnitInfo unit)
+    {
+        QuitAStackForRetreat(unit, oldCoor);   // 先从原来的堆叠中移除
+
+        UnitStacks[newCoor] = new UnitStack(unit, MapToLocal(newCoor), _main);
+
+        return UnitStacks[newCoor];
+
     }
 
     /// <summary>
@@ -354,6 +444,18 @@ public partial class Map : TileMapLayer
         if (stack.GetCount() == 0)
         {
             UnitStacks.Remove(unit.Coor);
+        }
+    }
+
+    public void QuitAStackForRetreat(UnitInfo unit, Vector2I coor)
+    {
+        UnitStack stack = UnitStacks[coor];
+        stack.RemoveUnit(unit);
+
+        // 如果堆叠为空则从字典中移除该堆叠的键值对
+        if (stack.GetCount() == 0)
+        {
+            UnitStacks.Remove(coor);
         }
     }
 
@@ -520,7 +622,7 @@ public partial class Map : TileMapLayer
 
             //GD.Print(MM.Inst.IsStackHovered);
             // 悬停高亮的判断是检测当前的鼠标所在地格坐标是否与上一次被记录的地格坐标相同
-            if (mouseCoorPos != PreciousCell && !IsHoveringCounter)
+            if (mouseCoorPos != PreciousCell && !IsHoveringCounter && !MM.Inst.IsStackHovered)
             {
                 EnterCell(mouseCoorPos);
 
@@ -697,7 +799,7 @@ public partial class Map : TileMapLayer
     }
 
 
-    [Signal] public delegate void SelectCoorEventHandler(Godot.Collections.Array<Vector2I> coors);
+    [Signal] public delegate void SelectCoorEventHandler(Godot.Collections.Array<Vector2I> coors, UnitStack stack);
 
     /// <summary>
     /// 当传入的地格坐标在_canMoveCoors里就触发SelectCoor事件，同时移除显示移动范围的高光（因为此时算子绑定该事件的方法已将算子移动）
@@ -711,9 +813,11 @@ public partial class Map : TileMapLayer
         if (CoorWithUnit.Contains((axialCoor, TeamEnum.Friend)) || CoorWithUnit.Contains((axialCoor, TeamEnum.Enemy))) return;
         if (MM.Inst.SelectedUnits.Count == 0 || MM.Inst.SelectedUnits.Count > 1) return;
 
+        UnitStack stack = FormAStack(coor);
+
         List<Vector2I> path = BulidValidPath(coor);
 
-        EmitSignal(SignalName.SelectCoor, new Godot.Collections.Array<Vector2I>(path));
+        EmitSignal(SignalName.SelectCoor, new Godot.Collections.Array<Vector2I>(path), stack);
 
     }
 
@@ -725,6 +829,14 @@ public partial class Map : TileMapLayer
     {
         EmitSignal(SignalName.ClickCoor, coor);
     }
+
+
+    protected virtual void OnRightBotton()
+    {
+        EmitSignal(SignalName.RightBotton);
+    }
+
+    [Signal] public delegate void RightBottonEventHandler();
 
     protected virtual void OnEnterStack(Vector2I coor, UnitStack stack)
     {

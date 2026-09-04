@@ -28,6 +28,8 @@ public partial class Counter : Area2D
     private Vector2 _downRightPosition;
     private Vector2 _size;
     public UnitStack ParentStack { get; set; }
+    public int StackIndex { get; set; } = 0;
+
 
     // 状态属性
     public bool IsHovering { get; private set; } = false;
@@ -84,12 +86,14 @@ public partial class Counter : Area2D
 
         // 当有算子被选择时触发此事件，没有被选中的算子将会调用自身的Deselect方法（在SwitchDeselect方法内做判断并调用）
         MouseManager.Inst.SwitchCounter += DeselectForMultiSelect;
-        MouseManager.Inst.EnterCounter += OnMouseExited;
+        //MouseManager.Inst.EnterCounter += OnMouseExited;
 
         // Map的事件
         _map.SelectCoor += MoveForMarch;    // 当地格被选中时触发此事件
+        _map.SelectCoor += RestoreCollisionShape;    // 当地格被选中时触发此事件，恢复算子碰撞体的形状
         _map.EnterStack += EnterStack;
         _map.ClickCoor += Deselect;
+        _map.RightBotton += Deselect;
 
         // 当算子被选中时触发事件，这里的绑定顺序一定不能调换，因为是先清除上一次选中时显示的绿色高亮再显示新的
         SelectUnit += _map.DisclickCellForUnit;
@@ -98,6 +102,8 @@ public partial class Counter : Area2D
         SelectUnit += _map.GetHexMpList;    // 调用计算最小路径的方法，获取算子移动范围，并显示绿色高光
         SelectUnit += _map.ShowZoc;
 
+
+
         DeselectUnit += _map.RemoveGreen;
         DeselectUnit += _map.RemoveZoc;
         DeselectUnit += MouseManager.Inst.ClearSelectedUnits;
@@ -105,8 +111,11 @@ public partial class Counter : Area2D
 
         MultiSelectEvent += _map.RemoveGreen;    // 当此时算子是被多选选中时（即Ctrl被按下时）移除绿色高光（因为算子在多选状态不能移动）
 
+        Retreated += _map.ProcessUnitRetreat;
+
         APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
+
 
 
 
@@ -257,6 +266,7 @@ public partial class Counter : Area2D
                 else
                 {
                     Select();
+                    UpToStackTop();
                 }
 
             }
@@ -349,10 +359,13 @@ public partial class Counter : Area2D
     /// 并返回算子移动后的全局坐标
     /// </summary>
     /// <param name="coor"></param>
-    public Vector2 Move(Array<Vector2I> path)
+    public Vector2 Move(Array<Vector2I> path, UnitStack stack)
     {
         if (!IsSelected) return new Vector2(-999, -999);
         Vector2 position = new Vector2();
+
+
+        FormStack(stack);
 
         _tween = GetTree().CreateTween();   // 创建一个补间实例，实现算子的平滑移动
 
@@ -373,17 +386,39 @@ public partial class Counter : Area2D
         return position;
     }
 
+    public void MoveInStack(int newIndex)
+    {
+        int deltaIndex = newIndex - StackIndex;
+
+        float offset = 4.0f * deltaIndex;
+        //GD.Print("堆叠内移动", StackIndex);
+        _tween = GetTree().CreateTween();
+        Vector2 pos = new Vector2(Position.X + offset, Position.Y - offset);
+
+        _tween.TweenProperty(this, "position", pos, 0.1);
+
+        StackIndex = newIndex;
+    }
+
     /// <summary>
     /// 事件处理器，响应Map.SelectCoor事件。所以无返回值，将算子移动到传入的地格坐标处
     /// </summary>
     /// <param name="path"></param>
-    public void MoveForMarch(Array<Vector2I> path)
+    public void MoveForMarch(Array<Vector2I> path, UnitStack stack)
     {
-        Move(path);
+        Move(path, stack);
+    }
+
+    public void RestoreCollisionShape(Array<Vector2I> _, UnitStack _2)
+    {
+        if (ParentStack.GetCount() == 1)
+        {
+            CollisionShape2D.Disabled = false;  // 如果算子是堆叠中的唯一一个，就启用它的碰撞体，这样就可以被鼠标选中
+        }
     }
 
     /// <summary>
-    /// 事件处理器，响应Map.EnterStack事件。将算子移动到传入的地格坐标处，并根据传入的index参数计算偏移量，避免算子重叠
+    /// 事件处理器，响应Map.EnterStack事件。将算子移动到传入的地格坐标处，并根据传入的index参数计算偏移量，避免算子重叠（其实主要功能就是移动算子）
     /// </summary>
     /// <param name="coor"></param>
     /// <param name="index">算子在堆叠中的排序索引（就是List中的索引）</param>
@@ -391,16 +426,57 @@ public partial class Counter : Area2D
     public void EnterStack(Vector2I coor, UnitStack stack, Array<Vector2I> path)
     {
         if (!IsSelected) return;
-        ParentStack = stack;
-        int index = stack.UnitIndexOf(UnitInfo);
+
         OnOrderStack(coor);
 
-        float offset = 4.0f * (index);
-        Vector2 position = Move(path);
+        Vector2 position = Move(path, stack);
 
-        Vector2 pos = new Vector2(position.X + offset, position.Y - offset);
+        GetRightStackPosition(position);
+    }
+
+    public void GetRightStackPosition(Vector2 position)
+    {
+        float stackOffset = 4.0f * (StackIndex);
+
+        Vector2 pos = new Vector2(position.X + stackOffset, position.Y - stackOffset);
 
         _tween.TweenProperty(this, "position", pos, 0.05);
+    }
+
+    public void StackChanged()
+    {
+
+        GD.Print(ParentStack.UnitIndexOf(UnitInfo) == ParentStack.GetCount() - 1);
+        if (ParentStack.UnitIndexOf(UnitInfo) == ParentStack.GetCount() - 1)
+        {
+            CollisionShape2D.Disabled = false;  // 如果算子在堆叠的顶部，则启用全部碰撞体
+        }
+
+    }
+
+    public void UpToStackTop()
+    {
+        int index = ParentStack.UnitIndexOf(UnitInfo);
+        int maxI = ParentStack.GetCount() - 1;
+
+        OnSelectedInStack(ParentStack.Units[index], ParentStack.Units[maxI], index, maxI);
+
+        (ParentStack.Units[index], ParentStack.Units[maxI]) = (ParentStack.Units[maxI], ParentStack.Units[index]);
+
+        OnOrderStack(UnitInfo.Coor);
+
+    }
+
+
+    public void FormStack(UnitStack stack)
+    {
+        ParentStack.StackChanged -= StackChanged;
+        ParentStack = stack;
+
+        int index = stack.UnitIndexOf(UnitInfo);
+
+        StackIndex = index;
+        ParentStack.StackChanged += StackChanged;
     }
 
     public void HighlightFormStack()
@@ -418,6 +494,9 @@ public partial class Counter : Area2D
     {
         if (!IsInsideTree()) return;
 
+        Vector2I oldCoor = UnitInfo.Coor;
+        Vector2 pos = new Vector2(0,0);
+
         _tween = GetTree().CreateTween();
         float time = 0.2f / num;
 
@@ -431,9 +510,20 @@ public partial class Counter : Area2D
                 break;
             }
 
-            UnitInfo.Coor = path[i];
-            _tween.TweenProperty(this, "position", _map.MapToLocal(path[i]), time);
+            pos = _map.MapToLocal(path[i]);
 
+            UnitInfo.Coor = path[i];
+            _tween.TweenProperty(this, "position", pos, time);
+
+        }
+
+        OnRetreated(UnitInfo.Coor, oldCoor, this);
+        OnOrderStack(UnitInfo.Coor);
+        GetRightStackPosition(pos);
+
+        foreach (var i in ParentStack.Units)
+        {
+            GD.Print(i.ID);
         }
 
         OnMoveUnit();
@@ -503,6 +593,21 @@ public partial class Counter : Area2D
 
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="sU">被选中的算子</param>
+    /// <param name="tU">在顶上的算子</param>
+    /// <param name="i">被选中算子的原索引</param>
+    /// <param name="m">最大索引</param>
+    protected virtual void OnSelectedInStack(UnitInfo sU, UnitInfo tU, int i, int m)
+    {
+        EmitSignal(SignalName.SelectedInStack, sU, tU, i, m);
+    }
+
+    [Signal] public delegate void SelectedInStackEventHandler(UnitInfo sU, UnitInfo tU, int i, int m);
+
+
     protected virtual void OnSelectUnit()
     {
         EmitSignal(SignalName.SelectUnit, UnitInfo);
@@ -556,9 +661,11 @@ public partial class Counter : Area2D
 
 
 
-    protected virtual void OnMouseExited()
+    protected virtual void OnRetreated(Vector2I newCoor, Vector2I oldCoor, Counter counter)
     {
-        EmitSignal(SignalName.MouseExited);
+        EmitSignal(SignalName.Retreated, newCoor, oldCoor, counter);
     }
+
+    [Signal] public delegate void RetreatedEventHandler(Vector2I coor, Vector2I oldCoor, Counter counter);
 
 }

@@ -140,6 +140,7 @@ public partial class MouseManager : Node
     /// </summary>
     public void ClearSelectedUnits()
     {
+        //GD.Print("清除");
         SelectedUnits.Clear();
     }
 
