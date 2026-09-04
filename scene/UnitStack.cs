@@ -25,6 +25,7 @@ namespace Data
 
         private void FormMask()
         {
+            GD.Print("forming mask");
             StackMask = _stackMask.Instantiate<Area2D>();
             StackMask.Position = new Vector2(CoorPosition.X + 5, CoorPosition.Y - 5);
             _main.AddChild(StackMask);
@@ -46,7 +47,7 @@ namespace Data
         public List<UnitInfo> Units { get; set; } = new List<UnitInfo>();
         public Vector2 CoorPosition { get; set; }
         private PackedScene _stackMask;
-        public Area2D StackMask { get; set; }
+        public Area2D StackMask { get; set; } = null;
         private Main _main;
 
 
@@ -55,10 +56,12 @@ namespace Data
         {
             Units.Add(unit);
 
-            if (Units.Count > 1)
+            if (Units.Count > 1 && StackMask == null)
             {
                 OnStackIncreasedTo2();
             }
+
+            OnStackChanged();
 
         }
         public void RemoveUnit(UnitInfo unit)
@@ -69,6 +72,8 @@ namespace Data
             {
                 OnStackDecreasedTo1();
             }
+
+            OnStackChanged();
         }
         public int GetCount()
         {
@@ -111,6 +116,13 @@ namespace Data
         }
 
         public event Action StackDecreasedTo1;
+
+        protected virtual void OnStackChanged()
+        {
+            EmitSignal(SignalName.StackChanged);
+        }
+
+        [Signal] public delegate void StackChangedEventHandler();
 
     }
 }

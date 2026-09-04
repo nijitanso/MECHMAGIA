@@ -1,8 +1,9 @@
-using Godot;
-using System;
-using System.Runtime.InteropServices.JavaScript;
 using Data;
+using Godot;
+using GodotPlugins.Game;
+using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.JavaScript;
 
 public partial class Main : Node2D
 {
@@ -62,6 +63,7 @@ public partial class Main : Node2D
             // 单位承受歼灭CR时触发该事件
             counter.RemoveCounter += RemoveCounterFromTree;
             counter.OrderStack += OrderingStack;
+            counter.SelectedInStack += MoveUnitInStack;
 
 
             if (counter != null)
@@ -96,8 +98,18 @@ public partial class Main : Node2D
         OnUnitsUpdate();
     }
 
+    public void MoveUnitInStack(UnitInfo sU, UnitInfo tU, int i, int m)
+    {
+        Counter sCounter = Units.Find(c => c.UnitInfo == sU);
+        sCounter.MoveInStack(m);
+
+        Counter tCounter = Units.Find(c => c.UnitInfo == tU);
+        tCounter.MoveInStack(i);
+    }
+
     public void OrderingStack(Vector2I coor)
     {
+
         UnitStack stack = _map.UnitStacks[coor];
 
         foreach (var unit in stack.Units)
@@ -122,6 +134,7 @@ public partial class Main : Node2D
         {
             Counter counter = Units.Find(u => u.UnitInfo == stack.Units[0]);
             counter.ParentStack = stack;
+            counter.ParentStack.StackChanged += counter.StackChanged;  // 将算子排序的方法绑定到栈的StackChanged事件上，这样当栈发生变化时就会调用这个方法
         }
     }
 
