@@ -11,7 +11,7 @@ using System.Linq;
 using System.Runtime;
 using System.Threading.Tasks;
 using APC = ActionProcessor.AttackProcessor;
-using MM = MouseManager;
+using MM = Managers.MouseManager;
 public partial class Map : TileMapLayer
 {
     public async void ShowTestMessage()
@@ -304,7 +304,12 @@ public partial class Map : TileMapLayer
 
         // 用于发起攻击时的双方阵营算子序列
         List<UnitInfo> friends = MM.Inst.SelectedUnits;
-        List<UnitInfo> enemies = new List<UnitInfo>() { MM.Inst.HoveringUnit };
+        List<UnitInfo> enemies = new List<UnitInfo>();
+        if (MM.Inst.IsStackHovered)
+        {
+            enemies = MM.Inst.HoveringStack.Units;
+        }
+        
 
 
         if (@event is InputEventMouseButton mouseEvent)

@@ -1,9 +1,11 @@
 using Data;
 using Godot;
+using Managers;
 using Godot.Collections;
 using System;
 using System.Collections.Generic;
 using APC = ActionProcessor.AttackProcessor;
+using TM = Managers.TurnManager;
 
 public partial class Counter : Area2D
 {
@@ -37,6 +39,8 @@ public partial class Counter : Area2D
     public bool IsMultiSelect { get; set; } = false;
 
     public Vector2I[] RetreatPath { get; set; }
+
+    
 
 
     private Tween _tween;
@@ -115,6 +119,10 @@ public partial class Counter : Area2D
 
         APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
+
+
+        TM.Inst.SwitchToMovementPhase += RefreshMovement;
+        TM.Inst.SwitchToAttackPhase += RefreshAttack;
 
 
 
@@ -362,6 +370,8 @@ public partial class Counter : Area2D
     public Vector2 Move(Array<Vector2I> path, UnitStack stack)
     {
         if (!IsSelected) return new Vector2(-999, -999);
+        if (UnitInfo.MoveLeft == 0) return new Vector2(-999, -999);
+
         Vector2 position = new Vector2();
 
 
@@ -382,6 +392,8 @@ public partial class Counter : Area2D
         Deselect();
 
         OnMoveUnit();
+
+        UnitInfo.MoveLeft -= 1;
 
         return position;
     }
@@ -591,6 +603,22 @@ public partial class Counter : Area2D
             }
         }
 
+    }
+
+    public void RefreshMovement(TeamEnum team)
+    {
+        if (UnitInfo.Team == team)
+        {
+            UnitInfo.MoveLeft += 1;
+        }
+    }
+
+    public void RefreshAttack(TeamEnum team)
+    {
+        if (UnitInfo.Team == team)
+        {
+            UnitInfo.AttackLeft += 1;
+        }
     }
 
     /// <summary>

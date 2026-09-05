@@ -1,7 +1,8 @@
 using Godot;
 using System;
+
 using System.Collections.Generic;
-using MM = MouseManager;
+using MM = Managers.MouseManager;
 
 namespace Data
 {
@@ -30,9 +31,14 @@ namespace Data
             StackMask.Position = new Vector2(CoorPosition.X + 5, CoorPosition.Y - 5);
             _main.AddChild(StackMask);
 
-            StackMask.MouseEntered += MM.Inst.SetIsStackHoveredAsTrue;
-            StackMask.MouseExited += MM.Inst.SetIsStackHoveredAsFalse;
+            StackMask.MouseEntered += SetHoveringStack;
+            StackMask.MouseExited += MM.Inst.RemoveHoveringStack;
 
+        }
+
+        public void SetHoveringStack()
+        {
+            MM.Inst.SetHoveringStack(this);
         }
 
         private void RemoveMask()

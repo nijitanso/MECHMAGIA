@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 MouseManager="*uid://dwd33e5be10rs"
 AttackProcessor="*uid://b6cvqetf8nhsv"
+TurnManager="*uid://c3fkjc30hl1r3"
 
 [display]
 

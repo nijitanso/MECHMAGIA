@@ -87,6 +87,9 @@ namespace Data
             }
         }
 
+        [JsonIgnore] public int MoveLeft { get; set; } = 1;
+        [JsonIgnore] public int AttackLeft { get; set; } = 1;
+
 
     }
 }
