@@ -660,6 +660,8 @@ public partial class Map : TileMapLayer
     /// <returns></returns>
     public List<Vector2I> BulidValidPath(Vector2I coor)
     {
+        if (_prev == null) return new List<Vector2I>();
+
         List<Vector2I> path;
         UnitInfo unit = MM.Inst.SelectedUnits[0];   // 只有在单选算子的情况下才会执行到这（不是的话在上面的if就返回了），单选序列只有0索引的一个单位
 
@@ -668,7 +670,7 @@ public partial class Map : TileMapLayer
         if (!zocs.Contains(unit.CoorOfAxial))
         {
             int index = _hexOffsetCoors.IndexOf(coor);
-            path = Dijkstra.GetPath(_prev, index, _hexOffsetCoors, _hexOffsetCoors.IndexOf(unit.Coor)); // 获取单位移动的最短路径
+            path = Dijkstra.GetPath(ref _prev, index, _hexOffsetCoors, _hexOffsetCoors.IndexOf(unit.Coor)); // 获取单位移动的最短路径
         }
         else
         {
@@ -783,6 +785,7 @@ public partial class Map : TileMapLayer
     public void RemoveGreen()
     {
         _mapInteraction2.RemoveGreenHighlight(_canMoveCoors);
+        _canMoveCoors = new List<Vector2I>();   // 也要清空可移动地格序列，逻辑上的延续（绿色地格不显示了说明没有可移动地格了）
     }
 
     /// <summary>
@@ -814,6 +817,7 @@ public partial class Map : TileMapLayer
     {
         AxialCoor axialCoor = AxialCoor.OffsetToAxial(coor);
 
+        if (_canMoveCoors.Count == 0) return;
         if (!_canMoveCoors.Contains(coor)) return;
         if (CoorWithUnit.Contains((axialCoor, TeamEnum.Friend)) || CoorWithUnit.Contains((axialCoor, TeamEnum.Enemy))) return;
         if (MM.Inst.SelectedUnits.Count == 0 || MM.Inst.SelectedUnits.Count > 1) return;
@@ -821,6 +825,7 @@ public partial class Map : TileMapLayer
         UnitStack stack = FormAStack(coor);
 
         List<Vector2I> path = BulidValidPath(coor);
+
 
         EmitSignal(SignalName.SelectCoor, new Godot.Collections.Array<Vector2I>(path), stack);
 
@@ -1018,7 +1023,7 @@ public class Dijkstra
     /// <param name="coors">用来通过索引获得地格坐标实例的序列</param>
     /// <param name="start">起点的索引</param>
     /// <returns></returns>
-    public static List<Vector2I> GetPath(int[] prev, int targetIndex, Godot.Collections.Array<Vector2I> coors, int start)
+    public static List<Vector2I> GetPath(ref int[] prev, int targetIndex, Godot.Collections.Array<Vector2I> coors, int start)
     {
         // 先建立序列，并将目的地节点先插入序列
         List<Vector2I> path = new List<Vector2I>();
@@ -1035,6 +1040,8 @@ public class Dijkstra
         }
 
         path.Reverse(); // 将序列反转，因为是从终点开始插入的
+
+        prev = null;   // 将前驱节点序列重置为初始状态，避免下次调用时出现错误
 
         return path;
     }

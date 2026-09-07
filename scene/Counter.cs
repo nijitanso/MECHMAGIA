@@ -22,6 +22,8 @@ public partial class Counter : Area2D
     private Map _map;
     private Main _main;
     private Sprite2D _bodySprite2D;
+    private PackedScene _canMoveIcon;
+    public Sprite2D CanMoveIcon { get; set; }
 
     // 算子对自身大小信息的储存，用于绘制鼠标悬停和选中边框
     private Vector2 _topLeftPosition;
@@ -57,6 +59,7 @@ public partial class Counter : Area2D
         _upperLayer = GetNode<Node2D>("UpperLayer");
         _bodySprite2D = GetNode<Sprite2D>("BodySprite2D");
         _main = GetParent<Main>();
+        _canMoveIcon = GD.Load<PackedScene>("res://scene/CanMoveIcon.tscn");
 
         // 算子的状态初始化
         Init();
@@ -103,7 +106,12 @@ public partial class Counter : Area2D
         SelectUnit += _map.DisclickCellForUnit;
         SelectUnit += MouseManager.Inst.SelectSwitchToCounter;
         SelectUnit += MouseManager.Inst.SetSelectedUnits;
-        SelectUnit += _map.GetHexMpList;    // 调用计算最小路径的方法，获取算子移动范围，并显示绿色高光
+
+        if (UnitInfo.MoveLeft !=0)  // 初始化时有移动机会才会绑定这个信号
+        {
+            SelectUnit += _map.GetHexMpList;    // 调用计算最小路径的方法，获取算子移动范围，并显示绿色高光
+        }
+
         SelectUnit += _map.ShowZoc;
 
 
@@ -120,7 +128,8 @@ public partial class Counter : Area2D
         APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
 
-
+        TM.Inst.NextPhrase += Deselect;
+        TM.Inst.NextPhrase += ChangePhrase;
         TM.Inst.SwitchToMovementPhase += RefreshMovement;
         TM.Inst.SwitchToAttackPhase += RefreshAttack;
 
@@ -143,10 +152,7 @@ public partial class Counter : Area2D
         // 设置位置
         Position = _map.MapToLocal(UnitInfo.Coor);
 
-        // 设置算子纹理上的数值数字
-        _attackPointLabel.Text = UnitInfo.AP.ToString();
-        _defendPointLabel.Text = UnitInfo.DP.ToString();
-        _movePointLabel.Text = UnitInfo.MP.ToString();
+        
 
         // 根据阵营设置自己的纹理颜色
         switch (UnitInfo.Team)
@@ -165,7 +171,35 @@ public partial class Counter : Area2D
                 break;
         }
 
+        UiInitialize();
 
+
+    }
+
+    public void UiInitialize()
+    {
+        // 设置算子纹理上的数值数字
+        _attackPointLabel.Text = UnitInfo.AP.ToString();
+        _defendPointLabel.Text = UnitInfo.DP.ToString();
+        _movePointLabel.Text = UnitInfo.MP.ToString();
+
+        CanMoveUiInit();
+    }
+
+    public void CanMoveUiInit()
+    {
+        CanMoveIcon = _canMoveIcon.Instantiate<Sprite2D>();
+        AddChild(CanMoveIcon);
+        CanMoveIcon.Scale = new Vector2(0.8f, 0.8f);
+
+        if (UnitInfo.MoveLeft > 0)
+        {
+            CanMoveIcon.Visible = true;
+        }
+        else
+        {
+            CanMoveIcon.Visible = false;
+        }
     }
 
     /// <summary>
@@ -362,6 +396,8 @@ public partial class Counter : Area2D
         OnDeselectUnit();
     }
 
+    
+
     /// <summary>
     /// 如果算子处于被选中状态，将算子移动到传入的地格坐标处，同时取消选中（调用Deselect方法），并且触发MoveUnit事件通知Main节点更新全局算子状态
     /// 并返回算子移动后的全局坐标
@@ -371,6 +407,7 @@ public partial class Counter : Area2D
     {
         if (!IsSelected) return new Vector2(-999, -999);
         if (UnitInfo.MoveLeft == 0) return new Vector2(-999, -999);
+        if (UnitInfo.Team != TM.Inst.Team) return new Vector2(-999, -999);
 
         Vector2 position = new Vector2();
 
@@ -394,6 +431,14 @@ public partial class Counter : Area2D
         OnMoveUnit();
 
         UnitInfo.MoveLeft -= 1;
+        SelectUnit -= _map.GetHexMpList;    // 没有移动机会后就不需要计算移动范围和显示绿色高光了
+
+        if (UnitInfo.MoveLeft == 0)
+        {
+            GD.Print("算子移动机会用完，隐藏可移动图标");
+            CanMoveIcon.Visible = false;
+        }
+
 
         return position;
     }
@@ -408,6 +453,7 @@ public partial class Counter : Area2D
         Vector2 pos = new Vector2(Position.X + offset, Position.Y - offset);
 
         _tween.TweenProperty(this, "position", pos, 0.1);
+
 
         StackIndex = newIndex;
     }
@@ -425,7 +471,7 @@ public partial class Counter : Area2D
     {
         if (ParentStack.GetCount() == 1)
         {
-            CollisionShape2D.Disabled = false;  // 如果算子是堆叠中的唯一一个，就启用它的碰撞体，这样就可以被鼠标选中
+            CollisionShape2D.Disabled = false;  // 如果算子是堆叠中的唯一一个，就启用它的碰撞体
         }
     }
 
@@ -438,6 +484,8 @@ public partial class Counter : Area2D
     public void EnterStack(Vector2I coor, UnitStack stack, Array<Vector2I> path)
     {
         if (!IsSelected) return;
+        if (UnitInfo.MoveLeft == 0) return;
+        if (UnitInfo.Team != TM.Inst.Team) return;
 
         OnOrderStack(coor);
 
@@ -453,6 +501,9 @@ public partial class Counter : Area2D
         Vector2 pos = new Vector2(position.X + stackOffset, position.Y - stackOffset);
 
         _tween.TweenProperty(this, "position", pos, 0.05);
+
+
+
     }
 
     public void StackChanged()
@@ -609,7 +660,10 @@ public partial class Counter : Area2D
     {
         if (UnitInfo.Team == team)
         {
-            UnitInfo.MoveLeft += 1;
+            UnitInfo.MoveLeft = UnitInfo.MaxMove;
+            SelectUnit += _map.GetHexMpList;
+
+            CanMoveIcon.Visible = true;
         }
     }
 
@@ -619,6 +673,12 @@ public partial class Counter : Area2D
         {
             UnitInfo.AttackLeft += 1;
         }
+    }
+
+    public void ChangePhrase()
+    {
+        SelectUnit -= _map.GetHexMpList;
+        CanMoveIcon.Visible = false;
     }
 
     /// <summary>

@@ -59,6 +59,19 @@ namespace Data
     /// </summary>
     public partial class UnitInfo : RefCounted
     {
+        public UnitInfo()
+        {
+            if (Team == TeamEnum.Enemy || Team == TeamEnum.Neutral)
+            {
+                GD.Print("0");
+                MoveLeft = 0;
+            }
+            else
+            {
+                MoveLeft = MaxMove;
+            }
+        }
+
         public int ID { get; set; }
         public int PosX { get; set; }
         public int PosY { get; set; }
@@ -87,8 +100,10 @@ namespace Data
             }
         }
 
-        [JsonIgnore] public int MoveLeft { get; set; } = 1;
+        public int MoveLeft { get; set; }
+        [JsonIgnore] public int MaxMove { get; set; } = 1;
         [JsonIgnore] public int AttackLeft { get; set; } = 1;
+        [JsonIgnore] public int MaxAttack { get; set; } = 1;
 
 
     }

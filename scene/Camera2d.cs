@@ -1,7 +1,9 @@
 using Godot;
 using System;
 using HexGrid;
-
+using TM = Managers.TurnManager;
+using Data;
+using System.Collections.Generic;
 public partial class Camera2d : Camera2D
 {
     [Export] public float PanSpeed { get; set; } = 1.0f;
@@ -18,9 +20,15 @@ public partial class Camera2d : Camera2D
     private float _cameraSizeX;
     private float _cameraSizeY;
 
+    // 对节点的引用
+    private Main _main;
+
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
+        _main = GetParent<Main>();
+
+
         _preciousMousePosition = GetGlobalMousePosition();
         _newZoom = Zoom;
         _newPosition = Position;
@@ -35,6 +43,10 @@ public partial class Camera2d : Camera2D
         _cameraSizeY = viewportSizeY / 2.0f / Zoom.Y;
 
         GD.Print($"摄像机大小：{_cameraSizeX}, {_cameraSizeY}");
+
+        TM.Inst.SwitchToMovementPhase += MoveToCorrTeam;
+        TM.Inst.SwitchToAttackPhase += MoveToCorrTeam;
+
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -86,11 +98,11 @@ public partial class Camera2d : Camera2D
         EdgeMove(currentMousePosition);
 
         // 让缩放和平移平滑过渡
-        Zoom = Zoom.Lerp(_newZoom, 8.0f * (float)delta); 
+        Zoom = Zoom.Lerp(_newZoom, 8.0f * (float)delta);
         Position = Position.Lerp(_newPosition, 8.0f * (float)delta);
 
         //  限制缩放范围，必须在Process方法中钳制范围是因为平滑移动
-        Zoom = new Vector2(Math.Clamp(Zoom.X, MinZoom.X, MaxZoom.X), Math.Clamp(Zoom.Y, MinZoom.Y, MaxZoom.Y)); 
+        Zoom = new Vector2(Math.Clamp(Zoom.X, MinZoom.X, MaxZoom.X), Math.Clamp(Zoom.Y, MinZoom.Y, MaxZoom.Y));
 
     }
 
@@ -167,4 +179,32 @@ public partial class Camera2d : Camera2D
 
     }
 
+    public void MoveToCorrTeam(TeamEnum team)
+    {
+        List<Counter> Counters = new List<Counter>();
+        int minId = int.MaxValue;
+        Counter target = new Counter();
+
+
+        if (team == TeamEnum.Friend)
+        {
+            Counters = _main.Units.FindAll(c => c.UnitInfo.Team == TeamEnum.Friend);
+        }
+        else
+        {
+            Counters = _main.Units.FindAll(c => c.UnitInfo.Team == TeamEnum.Enemy);
+        }
+
+        foreach (var counter in Counters)
+        {
+            if (counter.UnitInfo.ID < minId)
+            {
+                minId = counter.UnitInfo.ID;
+                target = counter;
+            }
+        }
+
+        _newPosition = target.Position;
+
+    }
 }

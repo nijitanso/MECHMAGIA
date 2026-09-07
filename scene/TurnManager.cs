@@ -31,6 +31,7 @@ namespace Managers
         public int Turn { get; set; } = 1;
         public TurnStateEnum TurnState { get; set; } = TurnStateEnum.PlayerTurn;
         public TurnPhaseEnum TurnPhase { get; set; } = TurnPhaseEnum.MovementPhase;
+        public TeamEnum Team { get; set; } = TeamEnum.Friend;
 
 
 
@@ -40,14 +41,22 @@ namespace Managers
         /// </summary>
         public void NextPhase()
         {
+            GD.Print("ChangePhrase");
+
+            OnNextPhrase();
+
+
             if (TurnState == TurnStateEnum.PlayerTurn)
             {
                 TurnState = TurnStateEnum.EnemyTurn;
+                Team = TeamEnum.Enemy;
+
                 SwitchPhase(TeamEnum.Enemy);
             }
             else
             {
                 TurnState = TurnStateEnum.PlayerTurn;
+                Team = TeamEnum.Friend;
 
                 if (TurnPhase == TurnPhaseEnum.MovementPhase)
                 {
@@ -62,6 +71,8 @@ namespace Managers
 
                 SwitchPhase(TeamEnum.Friend);
             }
+
+
         }
 
         public void NextTurn()
@@ -74,7 +85,10 @@ namespace Managers
         {
             if (@event is InputEventKey keyEvent)
             {
-                if (keyEvent == Key.Enter)
+                if ((keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.Space) && keyEvent.Pressed)
+                {
+                    NextPhase();
+                }
             }
         }
 
@@ -97,8 +111,18 @@ namespace Managers
 
 
 
+
         [Signal] public delegate void SwitchToMovementPhaseEventHandler(TeamEnum team);
         [Signal] public delegate void SwitchToAttackPhaseEventHandler(TeamEnum team);
+
+
+
+        protected virtual void OnNextPhrase()
+        {
+            EmitSignal(SignalName.NextPhrase);
+        }
+
+        [Signal] public delegate void NextPhraseEventHandler();
     }
 }
 
