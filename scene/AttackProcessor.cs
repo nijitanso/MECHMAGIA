@@ -96,6 +96,7 @@ namespace ActionProcessor
                 totalDP += unit.DP;
             }
 
+
             float ratio = totalAP / totalDP;
 
             if (ratio < 0.5) return false;  // 攻击/防御小于1/2则无法发起进攻

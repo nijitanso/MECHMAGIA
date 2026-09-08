@@ -671,7 +671,7 @@ public partial class Counter : Area2D
     {
         if (UnitInfo.Team == team)
         {
-            UnitInfo.AttackLeft += 1;
+            UnitInfo.AttackLeft = UnitInfo.MaxAttack;
         }
     }
 

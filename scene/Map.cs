@@ -305,6 +305,7 @@ public partial class Map : TileMapLayer
         // 用于发起攻击时的双方阵营算子序列
         List<UnitInfo> friends = MM.Inst.SelectedUnits;
         List<UnitInfo> enemies = new List<UnitInfo>();
+        // TODO：这里的堆叠判断有问题，单个算子并未形成堆叠，导致enemies为空
         if (MM.Inst.IsStackHovered)
         {
             enemies = MM.Inst.HoveringStack.Units;
@@ -543,6 +544,8 @@ public partial class Map : TileMapLayer
         bool isSelectUnit = MM.Inst.SelectState == MM.SelectStateEnum.Counter;
         bool isNeighbor = false;
         bool isEnemy = false;
+        bool isAttackLeft = true;
+
 
         // 判断有没有选中单位，避免索引越界（空序列必定越界）
         if (MM.Inst.SelectedUnits.Count != 0)
@@ -553,10 +556,18 @@ public partial class Map : TileMapLayer
         List<UnitInfo> tSelectedUnits = MM.Inst.SelectedUnits;  // 将需要遍历的序列临时储存，避免频繁调用getter访问属性
         AxialCoor hoveringUnit = MM.Inst.HoveringUnit.CoorOfAxial;
         AxialCoor axialCoor;
+        int attackLeft;
 
         foreach (var unit in tSelectedUnits)
         {
             axialCoor = unit.CoorOfAxial;
+            attackLeft = unit.AttackLeft;
+
+            if (attackLeft == 0)
+            {
+                isAttackLeft = false;
+                break;
+            } 
 
             // 判断悬停的单位是否处于所有选中单位共有的相邻地格，只要有一个选中单位的相邻地格未处于就将isNeighbor设为false并跳出循环
             if (axialCoor.GetNeighborCoor(HexAxialCoors).Contains(hoveringUnit))
@@ -578,7 +589,7 @@ public partial class Map : TileMapLayer
             return;
         }
 
-        if (isEnemy && !_attackIcon.Visible && isNeighbor)
+        if (isEnemy && !_attackIcon.Visible && isNeighbor && isAttackLeft)
         {
             DisplayAttackIcon(coor);
         }

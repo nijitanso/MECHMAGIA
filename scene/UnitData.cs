@@ -102,7 +102,7 @@ namespace Data
 
         public int MoveLeft { get; set; }
         [JsonIgnore] public int MaxMove { get; set; } = 1;
-        [JsonIgnore] public int AttackLeft { get; set; } = 1;
+        [JsonIgnore] public int AttackLeft { get; set; } = 0;
         [JsonIgnore] public int MaxAttack { get; set; } = 1;
 
 
