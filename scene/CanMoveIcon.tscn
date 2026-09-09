@@ -1,8 +1,0 @@
-[gd_scene format=3 uid="uid://bapgjk75hyr6m"]
-
-[ext_resource type="Texture2D" uid="uid://o52nguwmr1ql" path="res://resource/CanMoveIcon.png" id="1_f6set"]
-[ext_resource type="Script" uid="uid://144njbpn0ght" path="res://scene/CanMoveIcon.cs" id="2_psa2l"]
-
-[node name="CanMoveIcon" type="Sprite2D" unique_id=838904400]
-texture = ExtResource("1_f6set")
-script = ExtResource("2_psa2l")

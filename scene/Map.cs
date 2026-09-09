@@ -305,10 +305,14 @@ public partial class Map : TileMapLayer
         // 用于发起攻击时的双方阵营算子序列
         List<UnitInfo> friends = MM.Inst.SelectedUnits;
         List<UnitInfo> enemies = new List<UnitInfo>();
-        // TODO：这里的堆叠判断有问题，单个算子并未形成堆叠，导致enemies为空
+
         if (MM.Inst.IsStackHovered)
         {
             enemies = MM.Inst.HoveringStack.Units;
+        }
+        else
+        {
+            enemies.Add(MM.Inst.HoveringUnit);
         }
         
 

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using APC = ActionProcessor.AttackProcessor;
 using TM = Managers.TurnManager;
+using HexGrid;
 
 public partial class Counter : Area2D
 {
@@ -23,7 +24,7 @@ public partial class Counter : Area2D
     private Main _main;
     private Sprite2D _bodySprite2D;
     private PackedScene _canMoveIcon;
-    public Sprite2D CanMoveIcon { get; set; }
+    public CanActionIcon CanActionIcon { get; set; }
 
     // 算子对自身大小信息的储存，用于绘制鼠标悬停和选中边框
     private Vector2 _topLeftPosition;
@@ -42,7 +43,7 @@ public partial class Counter : Area2D
 
     public Vector2I[] RetreatPath { get; set; }
 
-    
+
 
 
     private Tween _tween;
@@ -59,7 +60,7 @@ public partial class Counter : Area2D
         _upperLayer = GetNode<Node2D>("UpperLayer");
         _bodySprite2D = GetNode<Sprite2D>("BodySprite2D");
         _main = GetParent<Main>();
-        _canMoveIcon = GD.Load<PackedScene>("res://scene/CanMoveIcon.tscn");
+        _canMoveIcon = GD.Load<PackedScene>("res://scene/CanActionIcon.tscn");
 
         // 算子的状态初始化
         Init();
@@ -107,7 +108,7 @@ public partial class Counter : Area2D
         SelectUnit += MouseManager.Inst.SelectSwitchToCounter;
         SelectUnit += MouseManager.Inst.SetSelectedUnits;
 
-        if (UnitInfo.MoveLeft !=0)  // 初始化时有移动机会才会绑定这个信号
+        if (UnitInfo.MoveLeft != 0)  // 初始化时有移动机会才会绑定这个信号
         {
             SelectUnit += _map.GetHexMpList;    // 调用计算最小路径的方法，获取算子移动范围，并显示绿色高光
         }
@@ -152,7 +153,7 @@ public partial class Counter : Area2D
         // 设置位置
         Position = _map.MapToLocal(UnitInfo.Coor);
 
-        
+
 
         // 根据阵营设置自己的纹理颜色
         switch (UnitInfo.Team)
@@ -183,22 +184,23 @@ public partial class Counter : Area2D
         _defendPointLabel.Text = UnitInfo.DP.ToString();
         _movePointLabel.Text = UnitInfo.MP.ToString();
 
-        CanMoveUiInit();
+        CanActionUiInit();
     }
 
-    public void CanMoveUiInit()
+    public void CanActionUiInit()
     {
-        CanMoveIcon = _canMoveIcon.Instantiate<Sprite2D>();
-        AddChild(CanMoveIcon);
-        CanMoveIcon.Scale = new Vector2(0.8f, 0.8f);
+        CanActionIcon = _canMoveIcon.Instantiate<CanActionIcon>();
+        AddChild(CanActionIcon);
+        CanActionIcon.Scale = new Vector2(0.8f, 0.8f);
+        CanActionIcon.Modulate = new Color("#52AB70");
 
         if (UnitInfo.MoveLeft > 0)
         {
-            CanMoveIcon.Visible = true;
+            CanActionIcon.Visible = true;
         }
         else
         {
-            CanMoveIcon.Visible = false;
+            CanActionIcon.Visible = false;
         }
     }
 
@@ -396,7 +398,7 @@ public partial class Counter : Area2D
         OnDeselectUnit();
     }
 
-    
+
 
     /// <summary>
     /// 如果算子处于被选中状态，将算子移动到传入的地格坐标处，同时取消选中（调用Deselect方法），并且触发MoveUnit事件通知Main节点更新全局算子状态
@@ -435,8 +437,7 @@ public partial class Counter : Area2D
 
         if (UnitInfo.MoveLeft == 0)
         {
-            GD.Print("算子移动机会用完，隐藏可移动图标");
-            CanMoveIcon.Visible = false;
+            CanActionIcon.Visible = false;
         }
 
 
@@ -558,7 +559,7 @@ public partial class Counter : Area2D
         if (!IsInsideTree()) return;
 
         Vector2I oldCoor = UnitInfo.Coor;
-        Vector2 pos = new Vector2(0,0);
+        Vector2 pos = new Vector2(0, 0);
 
         _tween = GetTree().CreateTween();
         float time = 0.2f / num;
@@ -633,6 +634,7 @@ public partial class Counter : Area2D
         // 同上
         if (APC.Inst.Attackers.Contains(this.UnitInfo))
         {
+            UnitInfo.AttackLeft -= 1;
             switch (APC.Inst.CR)
             {
                 case APC.CREnum.AR:
@@ -663,7 +665,8 @@ public partial class Counter : Area2D
             UnitInfo.MoveLeft = UnitInfo.MaxMove;
             SelectUnit += _map.GetHexMpList;
 
-            CanMoveIcon.Visible = true;
+            CanActionIcon.Visible = true;
+            CanActionIcon.Modulate = new Color("#52AB70");
         }
     }
 
@@ -672,13 +675,25 @@ public partial class Counter : Area2D
         if (UnitInfo.Team == team)
         {
             UnitInfo.AttackLeft = UnitInfo.MaxAttack;
+            CheckCanAttack();
+        }
+    }
+
+    public void CheckCanAttack()
+    {
+        List<AxialCoor> zocs = _map.GetCorrZocs(UnitInfo.Team);
+        if (zocs.Contains(UnitInfo.CoorOfAxial))
+        {
+            CanActionIcon.Modulate = new Color("#E84D39");
+            CanActionIcon.Visible = true;
+
         }
     }
 
     public void ChangePhrase()
     {
         SelectUnit -= _map.GetHexMpList;
-        CanMoveIcon.Visible = false;
+        CanActionIcon.Visible = false;
     }
 
     /// <summary>

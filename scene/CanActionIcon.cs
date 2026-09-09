@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class CanMoveIcon : Sprite2D
+public partial class CanActionIcon : Sprite2D
 {
 
     [Export] public float RotationSpeed { get; set; } = 30.0f;
