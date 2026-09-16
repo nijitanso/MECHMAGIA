@@ -320,7 +320,7 @@ public partial class Map : TileMapLayer
         if (@event is InputEventMouseButton mouseEvent)
         {
             // 判断左键时是否悬停在地图上
-            if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && isHoveringMap)
+            if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && !MM.Inst.CheckIsOnStack(mouseCoorPos))
             {
                 ClickCell(mouseCoorPos);
             }
@@ -675,12 +675,11 @@ public partial class Map : TileMapLayer
     /// <returns></returns>
     public List<Vector2I> BulidValidPath(Vector2I coor)
     {
-        if (_prev == null) return new List<Vector2I>();
-
         List<Vector2I> path;
         UnitInfo unit = MM.Inst.SelectedUnits[0];   // 只有在单选算子的情况下才会执行到这（不是的话在上面的if就返回了），单选序列只有0索引的一个单位
 
         List<AxialCoor> zocs = GetCorrZocs(unit.Team);
+
 
         if (!zocs.Contains(unit.CoorOfAxial))
         {
@@ -840,6 +839,7 @@ public partial class Map : TileMapLayer
         UnitStack stack = FormAStack(coor);
 
         List<Vector2I> path = BulidValidPath(coor);
+
 
 
         EmitSignal(SignalName.SelectCoor, new Godot.Collections.Array<Vector2I>(path), stack);

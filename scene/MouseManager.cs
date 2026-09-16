@@ -260,6 +260,22 @@ namespace Managers
 
         }
 
+        public bool CheckIsOnStack(Vector2 pos)
+        {
+            List<Rect2> rects = HoveringStack.UnitRects;
+
+            foreach (var rect in rects)
+            {
+                if (rect.HasPoint(pos))
+                {
+                    return true;
+                }
+
+            }
+
+            return false;
+        }
+
 
 
         public void OnEnterCounter()
