@@ -105,6 +105,9 @@ namespace Data
         [JsonIgnore] public int AttackLeft { get; set; } = 0;
         [JsonIgnore] public int MaxAttack { get; set; } = 1;
 
+        [JsonIgnore]
+        public Rect2 Rect { get; set; } = new Rect2();
+
 
     }
 }

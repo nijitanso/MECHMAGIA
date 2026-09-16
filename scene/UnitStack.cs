@@ -52,6 +52,9 @@ namespace Data
 
         public List<UnitInfo> Units { get; set; } = new List<UnitInfo>();
         public Vector2 CoorPosition { get; set; }
+
+        public List<Rect2> UnitRects { get; set; } = new List<Rect2>();
+
         private PackedScene _stackMask;
         public Area2D StackMask { get; set; } = null;
         private Main _main;
@@ -61,6 +64,7 @@ namespace Data
         public void AddUnit(UnitInfo unit)
         {
             Units.Add(unit);
+            UnitRects.Add(unit.Rect);
 
             if (Units.Count > 1 && StackMask == null)
             {
@@ -73,6 +77,8 @@ namespace Data
         public void RemoveUnit(UnitInfo unit)
         {
             Units.Remove(unit);
+            UnitRects.Remove(unit.Rect);
+
 
             if (Units.Count == 1)
             {
@@ -108,6 +114,9 @@ namespace Data
                 counter.Modulate = new Color(1, 1, 1, 0.1f); // 设置为半透明
             }
         }
+
+
+
 
         protected virtual void OnStackIncreasedTo2()
         {

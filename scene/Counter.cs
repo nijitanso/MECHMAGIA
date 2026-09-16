@@ -70,8 +70,11 @@ public partial class Counter : Area2D
         _size = CollisionShape2D.Shape.GetRect().Size;
         _topLeftPosition = new Vector2(-_size.X / 2.0f, -_size.Y / 2.0f);
         _topRightPosition = new Vector2(_size.X / 2.0f, -_size.Y / 2.0f);
-        _downLeftPosition = new Vector2(-_size.X / 2.0f, _size.Y / 2.0f);
         _downRightPosition = new Vector2(_size.X / 2.0f, _size.Y / 2.0f);
+        _downLeftPosition = new Vector2(-_size.X / 2.0f, _size.Y / 2.0f);
+
+        GetRectPointOnMap();
+
 
 
         // 绑定事件（同一个事件绑定不同事件处理器时，绑定的顺序将影响事件处理器被调用的顺序，不能随意调换）
@@ -144,6 +147,17 @@ public partial class Counter : Area2D
 
 
     }
+
+    public void GetRectPointOnMap()
+    {
+
+        Vector2 tL = UnitInfo.Coor + _topLeftPosition;
+
+        UnitInfo.Rect = new Rect2(tL, _size);
+
+    }
+
+
 
     /// <summary>
     /// 对单位状态进行初始化
@@ -418,6 +432,7 @@ public partial class Counter : Area2D
 
         _tween = GetTree().CreateTween();   // 创建一个补间实例，实现算子的平滑移动
 
+
         float time = 0.2f / path.Count; // 移动总用时为0.2秒
 
         // 遍历移动路径，将每一次补间都加入Tween实例的队列中（会自动按顺序执行）
@@ -427,6 +442,10 @@ public partial class Counter : Area2D
             position = _map.MapToLocal(coor);
             _tween.TweenProperty(this, "position", position, time);
         }
+
+
+        GetRectPointOnMap();
+
 
         Deselect();
 
@@ -510,7 +529,7 @@ public partial class Counter : Area2D
     public void StackChanged()
     {
 
-        GD.Print(ParentStack.UnitIndexOf(UnitInfo) == ParentStack.GetCount() - 1);
+        //GD.Print(ParentStack.UnitIndexOf(UnitInfo) == ParentStack.GetCount() - 1);
         if (ParentStack.UnitIndexOf(UnitInfo) == ParentStack.GetCount() - 1)
         {
             CollisionShape2D.Disabled = false;  // 如果算子在堆叠的顶部，则启用全部碰撞体
@@ -580,6 +599,9 @@ public partial class Counter : Area2D
             _tween.TweenProperty(this, "position", pos, time);
 
         }
+
+        GetRectPointOnMap();
+
 
         OnRetreated(UnitInfo.Coor, oldCoor, this);
         OnOrderStack(UnitInfo.Coor);
@@ -695,6 +717,9 @@ public partial class Counter : Area2D
         SelectUnit -= _map.GetHexMpList;
         CanActionIcon.Visible = false;
     }
+
+
+
 
     /// <summary>
     /// 
