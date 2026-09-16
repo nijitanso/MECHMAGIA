@@ -189,7 +189,7 @@ namespace Managers
         public Vector2I SelectedMapCoor { get; set; }
         public List<UnitInfo> SelectedUnits { get; set; } = new List<UnitInfo>();
         public UnitInfo HoveringUnit { get; set; } = new UnitInfo();    // 当HoveringUnit.ID == -1时，说明没有悬停的算子
-        public UnitStack HoveringStack { get; set; }
+        public UnitStack HoveringStack { get; set; } = null;
 
 
         private readonly UnitInfo _nullUnit = new UnitInfo() { ID = -1 };    // 私有字段用来储存没有悬停在算子上时HoveringUnit所引用的对象
@@ -262,6 +262,8 @@ namespace Managers
 
         public bool CheckIsOnStack(Vector2 pos)
         {
+            if (HoveringStack == null)  return false;
+
             List<Rect2> rects = HoveringStack.UnitRects;
 
             foreach (var rect in rects)
