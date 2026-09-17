@@ -146,7 +146,7 @@ public partial class Main : Node2D
         }
     }
 
-    public void HighlightFormStack(UnitStack stack, UnitInfo hoveringUnit)
+    public void HighlightFromStack(UnitStack stack, UnitInfo hoveringUnit)
     {
         if (stack == null) return;
 

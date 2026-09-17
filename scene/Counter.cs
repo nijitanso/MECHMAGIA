@@ -8,6 +8,9 @@ using APC = ActionProcessor.AttackProcessor;
 using TM = Managers.TurnManager;
 using HexGrid;
 
+/// <summary>
+/// 地图上的算子节点，负责显示、选中、移动、堆叠与战斗结果处理
+/// </summary>
 public partial class Counter : Area2D
 {
     //	UnitInfo类是每一个算子用来储存单位数据的数据类
@@ -15,24 +18,75 @@ public partial class Counter : Area2D
 
 
     // 对节点的引用
+    /// <summary>
+    /// 攻击点数标签
+    /// </summary>
     private Label _attackPointLabel;
+    /// <summary>
+    /// 防御点数标签
+    /// </summary>
     private Label _defendPointLabel;
+    /// <summary>
+    /// 移动点数标签
+    /// </summary>
     private Label _movePointLabel;
+    /// <summary>
+    /// 算子碰撞体
+    /// </summary>
     public CollisionShape2D CollisionShape2D { get; set; }
+    /// <summary>
+    /// 上层节点引用
+    /// </summary>
     private Node2D _upperLayer;
+    /// <summary>
+    /// 地图节点引用
+    /// </summary>
     private Map _map;
+    /// <summary>
+    /// 主场景引用
+    /// </summary>
     private Main _main;
+    /// <summary>
+    /// 算子本体精灵
+    /// </summary>
     private Sprite2D _bodySprite2D;
+    /// <summary>
+    /// 可行动图标场景资源
+    /// </summary>
     private PackedScene _canMoveIcon;
+    /// <summary>
+    /// 可行动图标实例
+    /// </summary>
     public CanActionIcon CanActionIcon { get; set; }
 
     // 算子对自身大小信息的储存，用于绘制鼠标悬停和选中边框
+    /// <summary>
+    /// 算子左上角相对坐标
+    /// </summary>
     private Vector2 _topLeftPosition;
+    /// <summary>
+    /// 算子右上角相对坐标
+    /// </summary>
     private Vector2 _topRightPosition;
+    /// <summary>
+    /// 算子左下角相对坐标
+    /// </summary>
     private Vector2 _downLeftPosition;
+    /// <summary>
+    /// 算子右下角相对坐标
+    /// </summary>
     private Vector2 _downRightPosition;
+    /// <summary>
+    /// 算子碰撞体尺寸
+    /// </summary>
     private Vector2 _size;
+    /// <summary>
+    /// 所属算子堆叠
+    /// </summary>
     public UnitStack ParentStack { get; set; }
+    /// <summary>
+    /// 本算子在所属堆叠中的索引
+    /// </summary>
     public int StackIndex { get; set; } = 0;
 
 
@@ -41,11 +95,17 @@ public partial class Counter : Area2D
     public bool IsSelected { get; private set; } = false;
     public bool IsMultiSelect { get; set; } = false;
 
+    /// <summary>
+    /// 撤退路径的地格坐标序列
+    /// </summary>
     public Vector2I[] RetreatPath { get; set; }
 
 
 
 
+    /// <summary>
+    /// 用于平滑移动的补间动画
+    /// </summary>
     private Tween _tween;
 
     // Called when the node enters the scene tree for the first time.
@@ -88,7 +148,7 @@ public partial class Counter : Area2D
         MouseEntered += HoveringHighlight;  // 调用自己的边框高亮方法
         MouseEntered += MouseManager.Inst.HoverSwitchToCounter; // 调用MouseManager的方法，将悬停状态改为算子MouseEntered
         MouseEntered += SetHoveringUnit;
-        MouseEntered += HighlightFormStack;
+        MouseEntered += HighlightFromStack;
 
         // 当鼠标离开算子时触发此事件，具体的事件处理器逻辑相同，不再赘述
         MouseExited += NotHoveringHighlight;
@@ -148,6 +208,9 @@ public partial class Counter : Area2D
 
     }
 
+    /// <summary>
+    /// 根据算子坐标和尺寸，更新 UnitInfo.Rect 为地图上的矩形区域
+    /// </summary>
     public void GetRectPointOnMap()
     {
 
@@ -191,6 +254,9 @@ public partial class Counter : Area2D
 
     }
 
+    /// <summary>
+    /// 初始化算子上的攻击、防御、移动点数显示，并初始化可行动图标
+    /// </summary>
     public void UiInitialize()
     {
         // 设置算子纹理上的数值数字
@@ -201,6 +267,9 @@ public partial class Counter : Area2D
         CanActionUiInit();
     }
 
+    /// <summary>
+    /// 创建并初始化可行动图标，有剩余移动次数时显示
+    /// </summary>
     public void CanActionUiInit()
     {
         CanActionIcon = _canMoveIcon.Instantiate<CanActionIcon>();
@@ -355,6 +424,9 @@ public partial class Counter : Area2D
         QueueRedraw();
     }
 
+    /// <summary>
+    /// 多选时切换本算子的选中状态
+    /// </summary>
     public void MultiSelect()
     {
         if (IsSelected)
@@ -463,6 +535,10 @@ public partial class Counter : Area2D
         return position;
     }
 
+    /// <summary>
+    /// 在堆叠内按新索引调整位置偏移
+    /// </summary>
+    /// <param name="newIndex">目标堆叠索引</param>
     public void MoveInStack(int newIndex)
     {
         int deltaIndex = newIndex - StackIndex;
@@ -487,6 +563,9 @@ public partial class Counter : Area2D
         Move(path, stack);
     }
 
+    /// <summary>
+    /// 堆叠只剩 1 个算子时启用碰撞体
+    /// </summary>
     public void RestoreCollisionShape(Array<Vector2I> _, UnitStack _2)
     {
         if (ParentStack.GetCount() == 1)
@@ -514,6 +593,10 @@ public partial class Counter : Area2D
         GetRightStackPosition(position);
     }
 
+    /// <summary>
+    /// 按堆叠索引计算偏移，将算子移到堆叠中的正确位置
+    /// </summary>
+    /// <param name="position">移动后的地格坐标</param>
     public void GetRightStackPosition(Vector2 position)
     {
         float stackOffset = 4.0f * (StackIndex);
@@ -526,6 +609,9 @@ public partial class Counter : Area2D
 
     }
 
+    /// <summary>
+    /// 堆叠变化时，若本算子在顶部则启用碰撞体
+    /// </summary>
     public void StackChanged()
     {
 
@@ -537,6 +623,9 @@ public partial class Counter : Area2D
 
     }
 
+    /// <summary>
+    /// 将本算子移到所属堆叠的顶部
+    /// </summary>
     public void UpToStackTop()
     {
         int index = ParentStack.UnitIndexOf(UnitInfo);
@@ -551,6 +640,10 @@ public partial class Counter : Area2D
     }
 
 
+    /// <summary>
+    /// 将本算子加入指定堆叠，并订阅堆叠变化
+    /// </summary>
+    /// <param name="stack">目标堆叠</param>
     public void FormStack(UnitStack stack)
     {
         ParentStack.StackChanged -= StackChanged;
@@ -562,9 +655,12 @@ public partial class Counter : Area2D
         ParentStack.StackChanged += StackChanged;
     }
 
-    public void HighlightFormStack()
+    /// <summary>
+    /// 鼠标悬停时，从所属堆叠高亮对应算子
+    /// </summary>
+    public void HighlightFromStack()
     {
-        _main.HighlightFormStack(ParentStack, UnitInfo);
+        _main.HighlightFromStack(ParentStack, UnitInfo);
     }
 
 
@@ -680,6 +776,10 @@ public partial class Counter : Area2D
 
     }
 
+    /// <summary>
+    /// 进入移动阶段时，为己方算子恢复移动次数并显示可行动图标
+    /// </summary>
+    /// <param name="team">当前行动阵营</param>
     public void RefreshMovement(TeamEnum team)
     {
         if (UnitInfo.Team == team)
@@ -692,6 +792,10 @@ public partial class Counter : Area2D
         }
     }
 
+    /// <summary>
+    /// 进入攻击阶段时，为己方算子恢复攻击次数并检测是否可攻击
+    /// </summary>
+    /// <param name="team">当前行动阵营</param>
     public void RefreshAttack(TeamEnum team)
     {
         if (UnitInfo.Team == team)
@@ -701,6 +805,9 @@ public partial class Counter : Area2D
         }
     }
 
+    /// <summary>
+    /// 若本算子处于敌方控制区，将可行动图标改为红色并显示
+    /// </summary>
     public void CheckCanAttack()
     {
         List<AxialCoor> zocs = _map.GetCorrZocs(UnitInfo.Team);
@@ -712,6 +819,9 @@ public partial class Counter : Area2D
         }
     }
 
+    /// <summary>
+    /// 切换阶段时取消移动范围计算，并隐藏可行动图标
+    /// </summary>
     public void ChangePhrase()
     {
         SelectUnit -= _map.GetHexMpList;
@@ -722,7 +832,7 @@ public partial class Counter : Area2D
 
 
     /// <summary>
-    /// 
+    /// 堆叠内算子被选中时触发
     /// </summary>
     /// <param name="sU">被选中的算子</param>
     /// <param name="tU">在顶上的算子</param>
@@ -733,67 +843,122 @@ public partial class Counter : Area2D
         EmitSignal(SignalName.SelectedInStack, sU, tU, i, m);
     }
 
+    /// <summary>
+    /// 堆叠内算子被选中时发出的信号
+    /// </summary>
     [Signal] public delegate void SelectedInStackEventHandler(UnitInfo sU, UnitInfo tU, int i, int m);
 
 
+    /// <summary>
+    /// 触发 SelectUnit 信号
+    /// </summary>
     protected virtual void OnSelectUnit()
     {
         EmitSignal(SignalName.SelectUnit, UnitInfo);
     }
 
+    /// <summary>
+    /// 算子被选中时发出的信号
+    /// </summary>
     [Signal] public delegate void SelectUnitEventHandler(UnitInfo unitInfo);
 
+    /// <summary>
+    /// 触发 DeselectUnit 信号
+    /// </summary>
     protected virtual void OnDeselectUnit()
     {
         EmitSignal(SignalName.DeselectUnit);
     }
 
+    /// <summary>
+    /// 算子取消选中时发出的信号
+    /// </summary>
     [Signal] public delegate void DeselectUnitEventHandler();
 
+    /// <summary>
+    /// 触发 MultiDeselectUnit 信号
+    /// </summary>
     protected virtual void OnMultiDeselectUnit()
     {
         EmitSignal(SignalName.MultiDeselectUnit, this.UnitInfo);
     }
 
+    /// <summary>
+    /// 多选状态下取消选中时发出的信号
+    /// </summary>
     [Signal] public delegate void MultiDeselectUnitEventHandler(UnitInfo unit);
 
+    /// <summary>
+    /// 触发 MoveUnit 信号
+    /// </summary>
     protected virtual void OnMoveUnit()
     {
         EmitSignal(SignalName.MoveUnit);
     }
 
+    /// <summary>
+    /// 算子移动后发出的信号
+    /// </summary>
     [Signal] public delegate void MoveUnitEventHandler();
 
+    /// <summary>
+    /// 触发 RemoveCounter 信号
+    /// </summary>
     protected virtual void OnRemoveCounter()
     {
         EmitSignal(SignalName.RemoveCounter, this);
     }
 
+    /// <summary>
+    /// 算子被歼灭移除时发出的信号
+    /// </summary>
     [Signal] public delegate void RemoveCounterEventHandler(Counter counter);
 
 
+    /// <summary>
+    /// 触发 MultiSelectEvent 信号
+    /// </summary>
     protected virtual void OnMultiSelectEvent()
     {
         EmitSignal(SignalName.MultiSelectEvent);
     }
 
+    /// <summary>
+    /// 算子在多选状态下被选中时发出的信号
+    /// </summary>
     [Signal] public delegate void MultiSelectEventEventHandler();
 
+    /// <summary>
+    /// 触发 OrderStack 信号，通知按坐标重排/整理堆叠
+    /// </summary>
+    /// <param name="coor">需要整理的地格坐标</param>
     protected virtual void OnOrderStack(Vector2I coor)
     {
         EmitSignal(SignalName.OrderStack, coor);
     }
 
+    /// <summary>
+    /// 需要按坐标重排/整理堆叠时发出的信号
+    /// </summary>
     [Signal] public delegate void OrderStackEventHandler(Vector2I coor);
 
 
 
 
+    /// <summary>
+    /// 触发 Retreated 信号
+    /// </summary>
+    /// <param name="newCoor">撤退后的地格坐标</param>
+    /// <param name="oldCoor">撤退前的地格坐标</param>
+    /// <param name="counter">撤退的算子</param>
     protected virtual void OnRetreated(Vector2I newCoor, Vector2I oldCoor, Counter counter)
     {
         EmitSignal(SignalName.Retreated, newCoor, oldCoor, counter);
     }
 
+    /// <summary>
+    /// 算子撤退完成后发出的信号
+    /// </summary>
     [Signal] public delegate void RetreatedEventHandler(Vector2I coor, Vector2I oldCoor, Counter counter);
 
 }
