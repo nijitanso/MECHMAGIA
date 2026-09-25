@@ -14,6 +14,9 @@ using APC = ActionProcessor.AttackProcessor;
 using MM = Managers.MouseManager;
 public partial class Map : TileMapLayer
 {
+    /// <summary>
+    /// 用来打印日志的工具方法，异步调用，每半秒一次
+    /// </summary>
     public async void ShowTestMessage()
     {
         while (true)
@@ -53,8 +56,8 @@ public partial class Map : TileMapLayer
 	 * 被每个列表代表的地格将用其索引在不同的序列中以不同的形式获取，因此不需要在这个图结构中存储地格的额外信息 */
     private List<(int to, float weight)>[] _hexGraph;
     public List<(int to, float weight)>[] GraphForRPath { get; set; }  // 实际上是一个权重均为1的图，用来算两个地格之间的纯距离
-    public bool IsGrgphExisted { get; set; } = false;
-    public bool IsUnitStacksExisted { get; set; } = false;
+    public bool IsGrgphExisted { get; set; } = false;   // 用来记录_hexGraph是否初始化
+    public bool IsUnitStacksExisted { get; set; } = false;  // 用来记录UnitStacks是否初始化
     private List<Vector2I> _canMoveCoors = new List<Vector2I>();    // 算子可以移动至的地格
     private int[] _prev;    // 用来建立最短路径的具体路径的前驱节点序列
 
@@ -197,18 +200,21 @@ public partial class Map : TileMapLayer
         }
     }
 
+    /// <summary>
+    /// 为所有在场的算子创建堆叠实例，并将算子加入
+    /// </summary>
+    /// <param name="units"></param>
     public void GetUnitStacks(Godot.Collections.Array<Counter> units)
     {
-        //GD.Print(units.Count);
         if (!IsUnitStacksExisted)
         {
             foreach (var unit in units)
             {
-                UnitStacks[unit.UnitInfo.Coor] = new UnitStack(unit.UnitInfo, unit.Position, _main);
-                //GD.Print(1);
+                // 这一步只是在stack实例所维护的序列中加入UnitInfo
+                UnitStacks[unit.UnitInfo.Coor] = new UnitStack(unit.UnitInfo, unit.Position, _main);    
             }
 
-            IsUnitStacksExisted = true;
+            IsUnitStacksExisted = true; // 更新状态
             OnStackReady(UnitStacks);
         }
 
@@ -308,13 +314,18 @@ public partial class Map : TileMapLayer
 
         if (MM.Inst.IsStackHovered)
         {
+            // 如果算子处于至少有两个单位的堆叠中则直接赋值这个堆叠中的单位序列
             enemies = MM.Inst.HoveringStack.Units;
         }
         else
         {
+            // 否则将单个算子加入序列
             enemies.Add(MM.Inst.HoveringUnit);
         }
-        
+        /* 
+        这么写的缘故是，判断鼠标是否在堆叠上，或者说怎么知道鼠标在哪个堆叠，靠的是堆叠中有两个单位之后实例化的一个蒙版（真是垃圾的设计），所以只能这么写了
+        不然MM.Inst.HoveringStack是null
+        */
 
 
         if (@event is InputEventMouseButton mouseEvent)
@@ -328,14 +339,17 @@ public partial class Map : TileMapLayer
             // 判断右键
             if (mouseEvent.ButtonIndex == MouseButton.Right && mouseEvent.Pressed)
             {
+                // 这个判断做的是右键时的一个取消所有选中的功能
                 if (MM.Inst.SelectedUnits.Count == 0)
                 {
+                    // 当没有算子被选中时，地格有可能被选中，此时要取消地格的选中并将先前选中的地格改为不可达
                     _mapInteraction.DisclickCell(PreciousClickedCell);
                     PreciousClickedCell = new Vector2I(-999, -999);
                     OnRightBotton();
                 }
                 else if (!_canMoveCoors.Contains(mouseCoorPos) && !_attackIcon.Visible)
                 {
+                    // 当有算子被选中时，不会有地格被选中，此时不用管地格的操作。并且触发右键取消必须是算子不会攻击或移动的情况
                     OnRightBotton();
                 }
 
@@ -362,13 +376,19 @@ public partial class Map : TileMapLayer
         }
     }
 
+    /// <summary>
+    /// 在算子撤退后处理相关堆叠的进出
+    /// </summary>
+    /// <param name="newCoor"></param>
+    /// <param name="oldCoor"></param>
+    /// <param name="counter"></param>
     public void ProcessUnitRetreat(Vector2I newCoor, Vector2I oldCoor, Counter counter)
     {
         AxialCoor axialCoor = AxialCoor.OffsetToAxial(newCoor);
         UnitStack stack;
         UnitInfo unit = counter.UnitInfo;
 
-        TeamEnum friendTeam = (unit.Team == TeamEnum.Enemy) ? TeamEnum.Enemy : TeamEnum.Friend;
+        TeamEnum friendTeam = (unit.Team == TeamEnum.Enemy) ? TeamEnum.Enemy : TeamEnum.Friend; // 用条件操作符获取与传入算子对应的友方阵营
 
         if (!CoorWithUnit.Contains((axialCoor, friendTeam)))
         {
@@ -381,7 +401,7 @@ public partial class Map : TileMapLayer
             GD.Print("进入堆叠");
         }
 
-        counter.FormStack(stack);
+        counter.SetStack(stack);
     }
 
     /// <summary>
@@ -415,7 +435,7 @@ public partial class Map : TileMapLayer
     }
 
     /// <summary>
-    /// 在进入新地格时创建一个新的算子堆叠，并将当前选中的算子加入到该堆叠中
+    /// 算子在进入新地格时创建一个新的算子堆叠，并将当前选中的算子加入到该堆叠中
     /// </summary>
     /// <param name="coor"></param>
     public UnitStack FormAStack(Vector2I coor)
@@ -423,7 +443,7 @@ public partial class Map : TileMapLayer
 
         UnitInfo unit = MM.Inst.SelectedUnits[0];
 
-        QuitAStack(unit);   // 先从原来的堆叠中移除
+        QuitAStack(unit);   // 先将算子从原来的堆叠中移除
 
         UnitStacks[coor] = new UnitStack(unit, MapToLocal(coor), _main);
 
@@ -431,6 +451,13 @@ public partial class Map : TileMapLayer
 
     }
 
+    /// <summary>
+    /// 之所以算子撤退时需要新的方法来处理堆叠是因为撤退时不确定具体会落在哪个地格，所以需要额外的方法参数来记录
+    /// </summary>
+    /// <param name="newCoor"></param>
+    /// <param name="oldCoor">也不能直接用unit.Coor了，因为算子是撤退完这个方法才被调用的</param>
+    /// <param name="unit"></param>
+    /// <returns></returns>
     public UnitStack FormAStackForRetreat(Vector2I newCoor, Vector2I oldCoor, UnitInfo unit)
     {
         QuitAStackForRetreat(unit, oldCoor);   // 先从原来的堆叠中移除
@@ -450,13 +477,18 @@ public partial class Map : TileMapLayer
         UnitStack stack = UnitStacks[unit.Coor];
         stack.RemoveUnit(unit);
 
-        // 如果堆叠为空则从字典中移除该堆叠的键值对
+        // 如果这个算子移出堆叠后，堆叠为空则从字典中移除该堆叠的键值对
         if (stack.GetCount() == 0)
         {
             UnitStacks.Remove(unit.Coor);
         }
     }
 
+    /// <summary>
+    /// 其实我觉得用重载也行，不过新方法名获取更解释性更好
+    /// </summary>
+    /// <param name="unit"></param>
+    /// <param name="coor"></param>
     public void QuitAStackForRetreat(UnitInfo unit, Vector2I coor)
     {
         UnitStack stack = UnitStacks[coor];
@@ -678,7 +710,7 @@ public partial class Map : TileMapLayer
         List<Vector2I> path;
         UnitInfo unit = MM.Inst.SelectedUnits[0];   // 只有在单选算子的情况下才会执行到这（不是的话在上面的if就返回了），单选序列只有0索引的一个单位
 
-        List<AxialCoor> zocs = GetCorrZocs(unit.Team);
+        List<AxialCoor> zocs = GetEnemyZocs(unit.Team);
 
 
         if (!zocs.Contains(unit.CoorOfAxial))
@@ -701,7 +733,7 @@ public partial class Map : TileMapLayer
     /// </summary>
     /// <param name="team"></param>
     /// <returns></returns>
-    public List<AxialCoor> GetCorrZocs(TeamEnum team)
+    public List<AxialCoor> GetEnemyZocs(TeamEnum team)
     {
         List<AxialCoor> zocs;
 
@@ -736,7 +768,7 @@ public partial class Map : TileMapLayer
         int start = _hexOffsetCoors.IndexOf(unitInfo.Coor); // Dijkstra算法需要的开始节点的索引
         TeamEnum enemyTeam = (unitInfo.Team == TeamEnum.Friend) ? TeamEnum.Enemy : TeamEnum.Friend;   // 获取敌方阵营的枚举值（条件操作符）
 
-        List<AxialCoor> zocs = GetCorrZocs(unitInfo.Team);
+        List<AxialCoor> zocs = GetEnemyZocs(unitInfo.Team);
         /* 调用Dijkstra算法返回一个元组，元组的第一个元素就是所有地格距离当前地格的最小距离（移动力成本）
 		此处语法是元组的解构 */
 
@@ -808,7 +840,7 @@ public partial class Map : TileMapLayer
     /// <param name="unit"></param>
     public void ShowZoc(UnitInfo unit)
     {
-        List<AxialCoor> zoc = GetCorrZocs(unit.Team);
+        List<AxialCoor> zoc = GetEnemyZocs(unit.Team);
         _mapInteraction3.ShowZoc(zoc);
     }
 
@@ -1073,7 +1105,7 @@ public class Dijkstra
         Vector2I[] rPath = new Vector2I[3]; // 撤退路径
         AxialCoor nowCoor = start;
         List<AxialCoor> enemyCoors = new List<AxialCoor>();
-        List<AxialCoor> zocs = map.GetCorrZocs(team);
+        List<AxialCoor> zocs = map.GetEnemyZocs(team);
 
 
         // 先得到所有敌方单位所在的地格

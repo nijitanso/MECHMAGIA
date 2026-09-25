@@ -4,6 +4,7 @@ using HexGrid;
 using TM = Managers.TurnManager;
 using Data;
 using System.Collections.Generic;
+using System.Linq;
 public partial class Camera2d : Camera2D
 {
     [Export] public float PanSpeed { get; set; } = 1.0f;
@@ -179,20 +180,25 @@ public partial class Camera2d : Camera2D
 
     }
 
+
+    /// <summary>
+    /// 回合阶段切换时，将摄像机移动到双方阵营中还存在与场上的ID最小的单位
+    /// </summary>
+    /// <param name="team"></param>
     public void MoveToCorrTeam(TeamEnum team)
     {
-        List<Counter> Counters = new List<Counter>();
+        List<Counter> Counters = _main.Units.Values.ToList();
         int minId = int.MaxValue;
         Counter target = new Counter();
 
 
         if (team == TeamEnum.Friend)
         {
-            Counters = _main.Units.FindAll(c => c.UnitInfo.Team == TeamEnum.Friend);
+            Counters.RemoveAll(c => c.UnitInfo.Team != TeamEnum.Friend);
         }
         else
         {
-            Counters = _main.Units.FindAll(c => c.UnitInfo.Team == TeamEnum.Enemy);
+            Counters.RemoveAll(c => c.UnitInfo.Team != TeamEnum.Enemy);
         }
 
         foreach (var counter in Counters)

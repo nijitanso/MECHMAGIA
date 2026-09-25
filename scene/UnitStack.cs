@@ -148,16 +148,17 @@ namespace Data
         }
 
         /// <summary>
-        /// 根据悬停的算子高亮显示各算子的计数控件
+        /// 在传入的总算子实例里遍历本堆叠中的部分算子，将悬停的算子设置为不透明，而其余算子设置为半透明。
+        /// 之所以要由Main.HighlightFromStack来调用是因为只有它持有总算子实例的序列
         /// </summary>
-        /// <param name="counters">与堆叠中算子对应的计数控件列表</param>
+        /// <param name="counters">所有在场上的算子实例</param>
         /// <param name="hoveringunit">当前鼠标悬停的算子</param>
-        public void HighLight(List<Counter> counters, UnitInfo hoveringunit)
+        public void HighLight(Dictionary<int, Counter> counters, UnitInfo hoveringunit)
         {
             foreach (var unit in Units)
             {
 
-                Counter counter = counters.Find(c => c.UnitInfo == unit);
+                Counter counter = counters[unit.ID];
 
                 if (unit == hoveringunit)
                 {

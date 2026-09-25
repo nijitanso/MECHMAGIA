@@ -3,6 +3,7 @@ using Godot;
 using GodotPlugins.Game;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices.JavaScript;
 
 public partial class Main : Node2D
@@ -12,7 +13,7 @@ public partial class Main : Node2D
     private Node _friendUnits;
     private Map _map;
 
-    public List<Counter> Units { get; set; } = new List<Counter>(); // 用于储存挂载在场景树的Counter实例的序列
+    public Dictionary<int, Counter> Units { get; set; } = new Dictionary<int, Counter>();   // 用于储存挂载在场景树的Counter实例的字典，用UnitInfo的Id来索引 
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -68,8 +69,8 @@ public partial class Main : Node2D
 
             if (counter != null)
             {
-                // 将这个创建好的Counter实例加入序列和挂载到Main节点下
-                Units.Add(counter);
+                // 将这个创建好的Counter实例加入字典和挂载到Main节点下
+                Units[unit.ID] = counter;
                 this.AddChild(counter);
             }
             else
@@ -93,20 +94,32 @@ public partial class Main : Node2D
         counter.UnitInfo.Coor = new Vector2I(-999, -999);   // 移动到“弃牌堆”（不是
         counter.IsMultiSelect = true;
         RemoveChild(counter);
-        Units.Remove(counter);
+        Units.Remove(counter.UnitInfo.ID);
 
         OnUnitsUpdate();
     }
 
+    //TODO：话说这根本不是Main该管的事，只是因为需要Counter实例序列而放在这里有点丑陋了！
+    /// <summary>
+    /// 事件处理器，响应Counter的SelectedInStack事件。经一手Main的原因还是因为要获取需要被交换位置的堆顶Counter实例，然后调用其MoveInStack
+    /// </summary>
+    /// <param name="sU"></param>
+    /// <param name="tU"></param>
+    /// <param name="i"></param>
+    /// <param name="m"></param>
     public void MoveUnitInStack(UnitInfo sU, UnitInfo tU, int i, int m)
     {
-        Counter sCounter = Units.Find(c => c.UnitInfo == sU);
+        Counter sCounter = Units[sU.ID];
         sCounter.MoveInStack(m);
 
-        Counter tCounter = Units.Find(c => c.UnitInfo == tU);
+        Counter tCounter = Units[tU.ID];
         tCounter.MoveInStack(i);
     }
 
+    /// <summary>
+    /// 事件处理器，响应Counter的OrderStack事件。根据算子在堆叠中的位置调整其ZIndex和碰撞体的启用与否
+    /// </summary>
+    /// <param name="coor"></param>
     public void OrderingStack(Vector2I coor)
     {
 
@@ -114,7 +127,7 @@ public partial class Main : Node2D
 
         foreach (var unit in stack.Units)
         {
-            Counter counter = Units.Find(u => u.UnitInfo == unit);
+            Counter counter = Units[unit.ID];
             counter.ZIndex = stack.UnitIndexOf(unit);  // 将算子的ZIndex设为它在栈中的索引值，这样就可以实现算子堆叠的视觉效果
 
             if (counter.ZIndex != stack.GetCount() - 1)
@@ -128,24 +141,36 @@ public partial class Main : Node2D
         }
     }
 
+    /// <summary>
+    /// 事件处理器，响应Map的StackReady。在堆叠初始化后将Counter实例和Stack实例绑定（设置所在堆叠和绑定堆叠的事件）
+    /// </summary>
+    /// <param name="stacks"></param>
     public void BindCounterWithStack(Godot.Collections.Dictionary<Vector2I, UnitStack> stacks)
     {
         foreach (var stack in stacks.Values)
         {
-            Counter counter = Units.Find(u => u.UnitInfo == stack.Units[0]);
+            Counter counter = Units[stack.Units[0].ID];    // 之所以要索引0是因为此时所有堆叠都只有一个单位，自然取第一个
             counter.ParentStack = stack;
-            counter.ParentStack.StackChanged += counter.StackChanged;  // 将算子排序的方法绑定到栈的StackChanged事件上，这样当栈发生变化时就会调用这个方法
+            counter.ParentStack.StackChanged += counter.StackChanged;
         }
     }
 
+    /// <summary>
+    /// 事件处理器，响应Map的QuitStack事件（Map是检测到鼠标进入地格后触发的事件）。当鼠标不在堆叠上时，将所有的算子的透明度改成1
+    /// </summary>
     public void RestoreCounterModulate()
     {
-        foreach (var counter in Units)
+        foreach (var counter in Units.Values)
         {
             counter.Modulate = new Color(1, 1, 1, 1);
         }
     }
 
+    /// <summary>
+    /// 将堆叠中除了被悬浮着的算子改为半透明
+    /// </summary>
+    /// <param name="stack"></param>
+    /// <param name="hoveringUnit"></param>
     public void HighlightFromStack(UnitStack stack, UnitInfo hoveringUnit)
     {
         if (stack == null) return;
@@ -156,7 +181,7 @@ public partial class Main : Node2D
     public void OnUnitsUpdate()
     {
         // 因为要传一个序列，所以要转成Godot的内置序列（可以被Variant类型容纳），接收参数的一方再转回C#原生类型
-        EmitSignal(SignalName.UnitsUpdate, new Godot.Collections.Array<Counter>(Units));
+        EmitSignal(SignalName.UnitsUpdate, new Godot.Collections.Array<Counter>(Units.Values));
     }
 
 

@@ -47,12 +47,19 @@ namespace Managers
             HoverState = HoverStateEnum.Counter;
         }
 
+        /// <summary>
+        /// 设置此时鼠标悬浮着的堆叠，并将IsStackHovered改为true
+        /// </summary>
+        /// <param name="stack"></param>
         public void SetHoveringStack(UnitStack stack)
         {
             IsStackHovered = true;
             HoveringStack = stack;
         }
 
+        /// <summary>
+        /// 设置此时鼠标悬浮着的堆叠为null，并将IsStackHovered改为false
+        /// </summary>
         public void RemoveHoveringStack()
         {
             IsStackHovered = false;
@@ -67,11 +74,21 @@ namespace Managers
             HoverState = HoverStateEnum.Map;
         }
 
+        /// <summary>
+        /// 用来打印日志的工具方法，异步调用，每半秒一次
+        /// </summary>
         public async void ShowTestMessage()
         {
+            string s = string.Empty;
+
             while (true)
             {
-                GD.Print(HoverState);
+                foreach (var u in SelectedUnits)
+                {
+                    s = s + u.ID.ToString();
+                }
+                GD.Print(s);
+                s = string.Empty;
                 await Task.Delay(500);
 
                 /*
@@ -140,7 +157,7 @@ namespace Managers
         }
 
         /// <summary>
-        /// 清空选中算子序列
+        /// 事件处理器，响应Counter的DeselectUnit事件。清空选中算子序列
         /// </summary>
         public void ClearSelectedUnits()
         {
@@ -205,7 +222,7 @@ namespace Managers
             // 等待所有节点被加载进场景树后进行初始化
             CallDeferred(nameof(InitializeNode));
 
-            //ShowTestMessage();
+            ShowTestMessage();
 
         }
 
@@ -260,6 +277,11 @@ namespace Managers
 
         }
 
+        /// <summary>
+        /// 用堆叠中算子所占据的矩形范围来判断鼠标是否在堆叠上
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
         public bool CheckIsOnStack(Vector2 pos)
         {
             if (HoveringStack == null)  return false;
@@ -268,6 +290,7 @@ namespace Managers
 
             foreach (var rect in rects)
             {
+                // 只要鼠标在任意矩形上即在堆叠上
                 if (rect.HasPoint(pos))
                 {
                     return true;

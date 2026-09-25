@@ -162,13 +162,17 @@ public partial class Counter : Area2D
         // Map的事件
         _map.SelectCoor += MoveForMarch;    // 当地格被选中时触发此事件
         _map.SelectCoor += RestoreCollisionShape;    // 当地格被选中时触发此事件，恢复算子碰撞体的形状
+
         _map.EnterStack += EnterStack;
+        
+        // 当点击了地格或者右键时让所有的算子都取消选中（每个算子都会调用一遍）
         _map.ClickCoor += Deselect;
         _map.RightBotton += Deselect;
 
+
         // 当算子被选中时触发事件，这里的绑定顺序一定不能调换，因为是先清除上一次选中时显示的绿色高亮再显示新的
         SelectUnit += _map.DisclickCellForUnit;
-        SelectUnit += MouseManager.Inst.SelectSwitchToCounter;
+        SelectUnit += MouseManager.Inst.SelectSwitchToCounter;  // 在这个处理器中将所有算子先取消选中
         SelectUnit += MouseManager.Inst.SetSelectedUnits;
 
         if (UnitInfo.MoveLeft != 0)  // 初始化时有移动机会才会绑定这个信号
@@ -182,7 +186,7 @@ public partial class Counter : Area2D
 
         DeselectUnit += _map.RemoveGreen;
         DeselectUnit += _map.RemoveZoc;
-        DeselectUnit += MouseManager.Inst.ClearSelectedUnits;
+        DeselectUnit += MouseManager.Inst.ClearSelectedUnits;   
         MultiDeselectUnit += MouseManager.Inst.RemoveSelectedUnits;
 
         MultiSelectEvent += _map.RemoveGreen;    // 当此时算子是被多选选中时（即Ctrl被按下时）移除绿色高光（因为算子在多选状态不能移动）
@@ -192,8 +196,11 @@ public partial class Counter : Area2D
         APC.Inst.Attack += Deselect;
         APC.Inst.Attack += ProcessCR;
 
+        // NextPhrase事件是每次“下一回合”都会触发的事件
         TM.Inst.NextPhrase += Deselect;
         TM.Inst.NextPhrase += ChangePhrase;
+
+        // 而这两个事件则是则是二选一触发，也就是说会触发两个事件
         TM.Inst.SwitchToMovementPhase += RefreshMovement;
         TM.Inst.SwitchToAttackPhase += RefreshAttack;
 
@@ -209,14 +216,13 @@ public partial class Counter : Area2D
     }
 
     /// <summary>
-    /// 根据算子坐标和尺寸，更新 UnitInfo.Rect 为地图上的矩形区域
+    /// 根据算子坐标和尺寸，更新 UnitInfo.Rect 为地图上的矩形区域，用于更精细的鼠标是否在算子上的判定
     /// </summary>
     public void GetRectPointOnMap()
     {
 
         Vector2 tL = UnitInfo.Coor + _topLeftPosition;
-
-        UnitInfo.Rect = new Rect2(tL, _size);
+        UnitInfo.Rect = new Rect2(tL, _size);   // Rect2类是Godot内置的一个表示纯数学上的举行范围，传入的坐标是相对于什么节点的就相对于什么节点
 
     }
 
@@ -272,10 +278,12 @@ public partial class Counter : Area2D
     /// </summary>
     public void CanActionUiInit()
     {
+        // 可行动图标只实例化一次，后续通过Visible来隐藏和显示
         CanActionIcon = _canMoveIcon.Instantiate<CanActionIcon>();
         AddChild(CanActionIcon);
+
         CanActionIcon.Scale = new Vector2(0.8f, 0.8f);
-        CanActionIcon.Modulate = new Color("#52AB70");
+        CanActionIcon.Modulate = new Color("#52AB70");  // 由于第一回合开始肯定是移动阶段，所以初始化为绿色
 
         if (UnitInfo.MoveLeft > 0)
         {
@@ -408,13 +416,13 @@ public partial class Counter : Area2D
         // 判断此时有无选中单位，避免下面索引越界
         if (MouseManager.Inst.SelectedUnits.Count != 0)
         {
-            // 如果在多选状态时试图选择不同阵营的算子则返回
+            // 如果在多选状态时试图选择不同阵营的算子则返回（不能同时选择不同阵营的算子）
             if (MouseManager.Inst.SelectedUnits[0].Team != UnitInfo.Team && IsMultiSelect) return;
         }
 
-
         OnSelectUnit();
 
+        // 这个事件仅仅只是清除一下算子可以移动的范围，因为多选状态不允许算子移动，而多选具体的逻辑在Deselect方法（多选的本质就是未被点击的算子不会被取消选中）
         if (IsMultiSelect)
         {
             OnMultiSelectEvent();
@@ -500,7 +508,7 @@ public partial class Counter : Area2D
         Vector2 position = new Vector2();
 
 
-        FormStack(stack);
+        SetStack(stack);
 
         _tween = GetTree().CreateTween();   // 创建一个补间实例，实现算子的平滑移动
 
@@ -536,7 +544,7 @@ public partial class Counter : Area2D
     }
 
     /// <summary>
-    /// 在堆叠内按新索引调整位置偏移
+    /// 当因为选择导致堆叠中的算子需要交换位置时，这个方法将会被调用
     /// </summary>
     /// <param name="newIndex">目标堆叠索引</param>
     public void MoveInStack(int newIndex)
@@ -601,20 +609,17 @@ public partial class Counter : Area2D
     {
         float stackOffset = 4.0f * (StackIndex);
 
-        Vector2 pos = new Vector2(position.X + stackOffset, position.Y - stackOffset);
+        Vector2 pos = new Vector2(position.X + stackOffset, position.Y - stackOffset);  // 其实有向量加法的重载
 
         _tween.TweenProperty(this, "position", pos, 0.05);
-
-
 
     }
 
     /// <summary>
-    /// 堆叠变化时，若本算子在顶部则启用碰撞体
+    /// 堆叠变化时，若本算子在顶部则启用碰撞体（用于检测鼠标）
     /// </summary>
     public void StackChanged()
     {
-
         //GD.Print(ParentStack.UnitIndexOf(UnitInfo) == ParentStack.GetCount() - 1);
         if (ParentStack.UnitIndexOf(UnitInfo) == ParentStack.GetCount() - 1)
         {
@@ -624,7 +629,7 @@ public partial class Counter : Area2D
     }
 
     /// <summary>
-    /// 将本算子移到所属堆叠的顶部
+    /// 被选中时，将本算子移到所属堆叠的顶部
     /// </summary>
     public void UpToStackTop()
     {
@@ -633,7 +638,7 @@ public partial class Counter : Area2D
 
         OnSelectedInStack(ParentStack.Units[index], ParentStack.Units[maxI], index, maxI);
 
-        (ParentStack.Units[index], ParentStack.Units[maxI]) = (ParentStack.Units[maxI], ParentStack.Units[index]);
+        (ParentStack.Units[index], ParentStack.Units[maxI]) = (ParentStack.Units[maxI], ParentStack.Units[index]);  // 将选中的算子和最顶层的交换位置
 
         OnOrderStack(UnitInfo.Coor);
 
@@ -641,18 +646,20 @@ public partial class Counter : Area2D
 
 
     /// <summary>
-    /// 将本算子加入指定堆叠，并订阅堆叠变化
+    /// 设置算子所在的堆叠
     /// </summary>
     /// <param name="stack">目标堆叠</param>
-    public void FormStack(UnitStack stack)
+    public void SetStack(UnitStack stack)
     {
+        // 更新堆叠
         ParentStack.StackChanged -= StackChanged;
         ParentStack = stack;
+        ParentStack.StackChanged += StackChanged;
+
 
         int index = stack.UnitIndexOf(UnitInfo);
 
         StackIndex = index;
-        ParentStack.StackChanged += StackChanged;
     }
 
     /// <summary>
@@ -703,10 +710,12 @@ public partial class Counter : Area2D
         OnOrderStack(UnitInfo.Coor);
         GetRightStackPosition(pos);
 
+        /*
         foreach (var i in ParentStack.Units)
         {
             GD.Print(i.ID);
         }
+        */
 
         OnMoveUnit();
     }
@@ -785,8 +794,9 @@ public partial class Counter : Area2D
         if (UnitInfo.Team == team)
         {
             UnitInfo.MoveLeft = UnitInfo.MaxMove;
-            SelectUnit += _map.GetHexMpList;
+            SelectUnit += _map.GetHexMpList;    // 是本阵营移动轮则可以在点击算子时通知map计算可移动范围
 
+            // 设置可行动图标
             CanActionIcon.Visible = true;
             CanActionIcon.Modulate = new Color("#52AB70");
         }
@@ -806,11 +816,11 @@ public partial class Counter : Area2D
     }
 
     /// <summary>
-    /// 若本算子处于敌方控制区，将可行动图标改为红色并显示
+    /// 若本算子处于敌方控制区，将可行动图标改为红色并显示（也就是可攻击）
     /// </summary>
     public void CheckCanAttack()
     {
-        List<AxialCoor> zocs = _map.GetCorrZocs(UnitInfo.Team);
+        List<AxialCoor> zocs = _map.GetEnemyZocs(UnitInfo.Team);
         if (zocs.Contains(UnitInfo.CoorOfAxial))
         {
             CanActionIcon.Modulate = new Color("#E84D39");
@@ -820,7 +830,7 @@ public partial class Counter : Area2D
     }
 
     /// <summary>
-    /// 切换阶段时取消移动范围计算，并隐藏可行动图标
+    /// 切换阶段时取消移动范围计算，并隐藏可行动图标。切换回合统一先断掉_map.GetHexMpList的连接，只有是本回合移动轮才会绑回来
     /// </summary>
     public void ChangePhrase()
     {
