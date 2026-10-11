@@ -301,6 +301,45 @@ namespace Managers
             return false;
         }
 
+        /// <summary>
+        /// 用MouseManager单例来处理鼠标的按键输入，通过事件向其他节点传递鼠标点击事件，而不用在每个节点中都去处理鼠标输入
+        /// </summary>
+        /// <param name="event"></param>
+        public override void _Input(InputEvent @event)
+        {
+            if (@event is InputEventMouseButton mouseEvent)
+            {
+                if (mouseEvent.ButtonIndex == MouseButton.Left)
+                {
+                    if (mouseEvent.Pressed)
+                    {
+                        OnLeftButtonClick();    // 这里可以处理鼠标左键按下的事件
+                    }
+                    else
+                    {
+                        OnLeftButtonRelease();  // 这里可以处理鼠标左键释放的事件
+                    }
+                }
+            }
+        }
+
+
+
+
+        public void OnLeftButtonClick()
+        {
+            EmitSignal(SignalName.LeftButtonClick);
+        }
+
+        [Signal] public delegate void LeftButtonClickEventHandler();
+
+        public void OnLeftButtonRelease()
+        {
+            EmitSignal(SignalName.LeftButtonRelease);
+        }
+
+        [Signal] public delegate void LeftButtonReleaseEventHandler();
+
 
 
         public void OnEnterCounter()

@@ -301,7 +301,7 @@ public partial class Map : TileMapLayer
         UpdateMouseTracking();
     }
 
-    public override void _Input(InputEvent @event)
+    public override void _UnhandledInput(InputEvent @event)
     {
         Vector2I mouseCoorPos = LocalToMap(GetLocalMousePosition());    // 先获取当前鼠标所在位置
 
@@ -645,6 +645,16 @@ public partial class Map : TileMapLayer
     /// </summary>
     public void UpdateMouseTracking()
     {
+        // 若鼠标悬停在GUI控件上则取消地格的高亮并返回
+        if (GetViewport().GuiGetHoveredControl() != null)
+        {
+            QuitCell(PreciousCell);
+            PreciousCell = new Vector2I(-999, -999);
+
+            return;
+
+        }
+
         Vector2I mouseCoorPos = LocalToMap(GetLocalMousePosition());    // 鼠标当前在地图上的地格坐标
         bool IsHoveringCounter = MM.Inst.HoverState == MM.HoverStateEnum.Counter;   // 鼠标当前是否悬停在算子上
 

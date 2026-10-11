@@ -197,8 +197,8 @@ public partial class Counter : Area2D
         APC.Inst.Attack += ProcessCR;
 
         // NextPhrase事件是每次“下一回合”都会触发的事件
-        TM.Inst.NextPhrase += Deselect;
-        TM.Inst.NextPhrase += ChangePhrase;
+        TM.Inst.NextPhase += Deselect;
+        TM.Inst.NextPhase += ChangePhrase;
 
         // 而这两个事件则是则是二选一触发，也就是说会触发两个事件
         TM.Inst.SwitchToMovementPhase += RefreshMovement;

@@ -39,11 +39,11 @@ namespace Managers
         /// <summary>
         /// 在当前回合中切换阶段。阶段是敌我双方交替进行的：玩家移动 → 敌人移动 → 玩家攻击 → 敌人攻击 → 下一回合
         /// </summary>
-        public void NextPhase()
+        public void MoveToNextPhase()
         {
             GD.Print("ChangePhrase");
 
-            OnNextPhrase();
+            OnNextPhase();
 
 
             if (TurnState == TurnStateEnum.PlayerTurn)
@@ -66,7 +66,7 @@ namespace Managers
                 {
                     TurnPhase = TurnPhaseEnum.MovementPhase;
 
-                    NextTurn();
+                    MoveToNextTurn();
                 }
 
                 SwitchPhase(TeamEnum.Friend);
@@ -75,9 +75,10 @@ namespace Managers
 
         }
 
-        public void NextTurn()
+        public void MoveToNextTurn()
         {
             Turn++;
+            OnNextTurn();
         }
 
 
@@ -87,7 +88,7 @@ namespace Managers
             {
                 if ((keyEvent.Keycode == Key.Enter || keyEvent.Keycode == Key.Space) && keyEvent.Pressed)
                 {
-                    NextPhase();
+                    MoveToNextPhase();
                 }
             }
         }
@@ -117,12 +118,20 @@ namespace Managers
 
 
 
-        protected virtual void OnNextPhrase()
+        protected virtual void OnNextPhase()
         {
-            EmitSignal(SignalName.NextPhrase);
+            EmitSignal(SignalName.NextPhase);
         }
 
-        [Signal] public delegate void NextPhraseEventHandler();
+        [Signal] public delegate void NextPhaseEventHandler();
+
+        protected virtual void OnNextTurn()
+        {
+            EmitSignal(SignalName.NextTurn);
+        }
+
+        [Signal] public delegate void NextTurnEventHandler();
+
     }
 }
 

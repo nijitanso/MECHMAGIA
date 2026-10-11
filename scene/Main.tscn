@@ -14,6 +14,10 @@
 [ext_resource type="Script" uid="uid://cm3uiac8mclsw" path="res://scene/MapInteraction3.cs" id="10_hrl0l"]
 [ext_resource type="Script" uid="uid://nru6pwl4jp5k" path="res://scene/PanelContainer1.cs" id="11_764rb"]
 [ext_resource type="Script" uid="uid://jksi4btbecwy" path="res://scene/AttackMessage.cs" id="11_x4yfu"]
+[ext_resource type="Script" uid="uid://d306ofo5s4nek" path="res://scene/TurnLabel.cs" id="15_3hqfm"]
+[ext_resource type="Texture2D" uid="uid://dvfn3x27tsbo4" path="res://resource/NextTurnGif.png" id="15_tuai4"]
+[ext_resource type="Script" uid="uid://nyvpmuemmt3w" path="res://scene/PhaseLabel.cs" id="16_08k7p"]
+[ext_resource type="Script" uid="uid://hn5f7thhw64" path="res://scene/NextTurnGif.cs" id="16_ob58h"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_pnqar")
@@ -79,6 +83,10 @@ tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetAtlasSource_tuai4")
 
 [sub_resource type="LabelSettings" id="LabelSettings_llu5k"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ob58h"]
+atlas = ExtResource("15_tuai4")
+region = Rect2(0, 0, 32, 32)
 
 [node name="Main" type="Node2D" unique_id=1774698135]
 script = ExtResource("1_3sxgj")
@@ -151,3 +159,59 @@ size_flags_horizontal = 4
 text = "是的是的大苏打"
 label_settings = SubResource("LabelSettings_llu5k")
 script = ExtResource("11_x4yfu")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="GUI" unique_id=1373751299]
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.16000001
+offset_left = 920.0
+offset_bottom = -39.680008
+size_flags_horizontal = 0
+alignment = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GUI/HBoxContainer" unique_id=421674695]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="GUI/HBoxContainer/VBoxContainer" unique_id=1141915944]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/margin_left = 3
+
+[node name="PanelContainer" type="PanelContainer" parent="GUI/HBoxContainer/VBoxContainer/MarginContainer" unique_id=166648183]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="GUI/HBoxContainer/VBoxContainer/MarginContainer/PanelContainer" unique_id=2130675881]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 3
+
+[node name="TurnLabel" type="Label" parent="GUI/HBoxContainer/VBoxContainer/MarginContainer/PanelContainer/MarginContainer" unique_id=230836332]
+layout_mode = 2
+text = "第1回合"
+script = ExtResource("15_3hqfm")
+
+[node name="MarginContainer2" type="MarginContainer" parent="GUI/HBoxContainer/VBoxContainer" unique_id=1728880158]
+layout_mode = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="GUI/HBoxContainer/VBoxContainer/MarginContainer2" unique_id=1106164870]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="GUI/HBoxContainer/VBoxContainer/MarginContainer2/PanelContainer" unique_id=790220922]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 3
+
+[node name="PhaseLabel" type="Label" parent="GUI/HBoxContainer/VBoxContainer/MarginContainer2/PanelContainer/MarginContainer" unique_id=45494379]
+layout_mode = 2
+text = "我方机动"
+script = ExtResource("16_08k7p")
+
+[node name="NextTurnGif" type="TextureRect" parent="GUI/HBoxContainer" unique_id=1988223607]
+layout_mode = 2
+texture = SubResource("AtlasTexture_ob58h")
+expand_mode = 2
+script = ExtResource("16_ob58h")
