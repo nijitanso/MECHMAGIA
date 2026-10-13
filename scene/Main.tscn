@@ -1,23 +1,24 @@
 [gd_scene format=4 uid="uid://c84uljsw7tbbi"]
 
-[ext_resource type="Script" uid="uid://cwfjctng116ur" path="res://scene/Main.cs" id="1_3sxgj"]
+[ext_resource type="Script" uid="uid://cwfjctng116ur" path="res://scripts/Main.cs" id="1_3sxgj"]
 [ext_resource type="Texture2D" uid="uid://chqs74d5rxosv" path="res://resource/Sprite-0002.png" id="1_pnqar"]
-[ext_resource type="Script" uid="uid://b2kgo7ty51nnc" path="res://scene/Map.cs" id="2_3sxgj"]
+[ext_resource type="Script" uid="uid://b2kgo7ty51nnc" path="res://scripts/Map.cs" id="2_3sxgj"]
 [ext_resource type="Texture2D" uid="uid://t4nouivmyg4d" path="res://resource/HoverHighlight.png" id="3_x4yfu"]
 [ext_resource type="Texture2D" uid="uid://da6kp0jodsvp" path="res://resource/GreenHighlight.png" id="4_764rb"]
 [ext_resource type="Texture2D" uid="uid://csyimsirusnkf" path="res://resource/HoverHighlight2.png" id="5_aex65"]
-[ext_resource type="Script" uid="uid://q424eifra8qk" path="res://scene/MapInteraction.cs" id="6_hrl0l"]
-[ext_resource type="Script" uid="uid://bs7de0smemvrp" path="res://scene/MapInteraction2.cs" id="7_tuai4"]
+[ext_resource type="Script" uid="uid://q424eifra8qk" path="res://scripts/MapInteraction.cs" id="6_hrl0l"]
+[ext_resource type="Script" uid="uid://bs7de0smemvrp" path="res://scripts/MapInteraction2.cs" id="7_tuai4"]
 [ext_resource type="Texture2D" uid="uid://djvjsxl8t7hc5" path="res://resource/ZocIcon.png" id="8_aex65"]
-[ext_resource type="Script" uid="uid://bynvgx08a3ha3" path="res://scene/Camera2d.cs" id="8_ob58h"]
+[ext_resource type="Script" uid="uid://bynvgx08a3ha3" path="res://scripts/Camera2d.cs" id="8_ob58h"]
 [ext_resource type="PackedScene" uid="uid://br8k7o7b4xuo5" path="res://scene/AttackIcon.tscn" id="9_3sxgj"]
-[ext_resource type="Script" uid="uid://cm3uiac8mclsw" path="res://scene/MapInteraction3.cs" id="10_hrl0l"]
-[ext_resource type="Script" uid="uid://nru6pwl4jp5k" path="res://scene/PanelContainer1.cs" id="11_764rb"]
-[ext_resource type="Script" uid="uid://jksi4btbecwy" path="res://scene/AttackMessage.cs" id="11_x4yfu"]
-[ext_resource type="Script" uid="uid://d306ofo5s4nek" path="res://scene/TurnLabel.cs" id="15_3hqfm"]
+[ext_resource type="Script" uid="uid://cm3uiac8mclsw" path="res://scripts/MapInteraction3.cs" id="10_hrl0l"]
+[ext_resource type="Script" uid="uid://nru6pwl4jp5k" path="res://scripts/PanelContainer1.cs" id="11_764rb"]
+[ext_resource type="Script" uid="uid://jksi4btbecwy" path="res://scripts/AttackMessage.cs" id="11_x4yfu"]
+[ext_resource type="Script" uid="uid://20l3kgfvxgtv" path="res://scripts/Gui.cs" id="13_8cuns"]
+[ext_resource type="Script" uid="uid://d306ofo5s4nek" path="res://scripts/TurnLabel.cs" id="15_3hqfm"]
 [ext_resource type="Texture2D" uid="uid://dvfn3x27tsbo4" path="res://resource/NextTurnGif.png" id="15_tuai4"]
-[ext_resource type="Script" uid="uid://nyvpmuemmt3w" path="res://scene/PhaseLabel.cs" id="16_08k7p"]
-[ext_resource type="Script" uid="uid://hn5f7thhw64" path="res://scene/NextTurnGif.cs" id="16_ob58h"]
+[ext_resource type="Script" uid="uid://nyvpmuemmt3w" path="res://scripts/PhaseLabel.cs" id="16_08k7p"]
+[ext_resource type="Script" uid="uid://hn5f7thhw64" path="res://scripts/NextTurnGif.cs" id="16_ob58h"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_pnqar")
@@ -130,6 +131,7 @@ ZoomSpeed = 0.3
 [node name="FriendUnits" type="Node" parent="." unique_id=2135904185]
 
 [node name="GUI" type="CanvasLayer" parent="." unique_id=353398706]
+script = ExtResource("13_8cuns")
 
 [node name="VBoxContainer1" type="VBoxContainer" parent="GUI" unique_id=381880565]
 anchors_preset = 13
@@ -215,3 +217,25 @@ layout_mode = 2
 texture = SubResource("AtlasTexture_ob58h")
 expand_mode = 2
 script = ExtResource("16_ob58h")
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="GUI" unique_id=544112749]
+offset_top = 448.0
+offset_right = 1152.0
+offset_bottom = 648.0
+
+[node name="MarginContainer" type="MarginContainer" parent="GUI/HBoxContainer2" unique_id=227915381]
+custom_minimum_size = Vector2(300, 100)
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="PanelContainer" type="PanelContainer" parent="GUI/HBoxContainer2/MarginContainer" unique_id=1957651631]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="GUI/HBoxContainer2/MarginContainer/PanelContainer" unique_id=1812339560]
+layout_mode = 2
+size_flags_vertical = 0
+text = "显示一些信息"

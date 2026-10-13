@@ -10,8 +10,10 @@ public partial class Main : Node2D
 {
     // 对节点的引用
     private PackedScene _counter;
+    private PackedScene _floatingDescription;
     private Node _friendUnits;
     private Map _map;
+    private Gui _gui;
 
     public Dictionary<int, Counter> Units { get; set; } = new Dictionary<int, Counter>();   // 用于储存挂载在场景树的Counter实例的字典，用UnitInfo的Id来索引 
 
@@ -20,8 +22,10 @@ public partial class Main : Node2D
     {
         // 获取对节点的引用
         _counter = GD.Load<PackedScene>("res://scene/Counter.tscn");
+        _floatingDescription = GD.Load<PackedScene>("res://scene/FloatingDescription.tscn");
         _friendUnits = GetNode<Node>("FriendUnits");
         _map = GetNode<Map>("Map");
+        _gui = GetNode<Gui>("GUI");
 
         UnitDataJson.Initialize();  // 从JSON中获取单位的数据，将数据存储到UnitData这个静态类中（但似乎这个类意义并不大，因为数据全在UnitInfo实例里）
 
@@ -45,6 +49,10 @@ public partial class Main : Node2D
     public void Init()
     {
         InstantiateUnits();
+
+        FloatingDescription floatingDescription = _floatingDescription.Instantiate<FloatingDescription>();
+        // 将FloatingDescription实例挂载到Gui节点下，这样描述描述的UI就是独立于摄像机的，大小不会改变
+        _gui.AddChild(floatingDescription);
     }
 
     /// <summary>

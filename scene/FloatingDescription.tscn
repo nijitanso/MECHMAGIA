@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://d2nluskbqqtxn"]
+
+[ext_resource type="Script" uid="uid://jd0rm6tyu5f6" path="res://scripts/FloatingDescription.cs" id="1_1jyuk"]
+
+[node name="FloatingDescription" type="Control" unique_id=1707561731]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_1jyuk")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=547859140]
+layout_mode = 0
+offset_right = 190.0
+offset_bottom = 124.0
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1608473015]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer" unique_id=2136207311]
+layout_mode = 2
+size_flags_vertical = 0
+text = "显示一些信息"

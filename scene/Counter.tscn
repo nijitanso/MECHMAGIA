@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://ianb4qyghj7p"]
 
 [ext_resource type="Texture2D" uid="uid://biwjm6o6pti1x" path="res://resource/Unit-1.png" id="1_1h5m0"]
-[ext_resource type="Script" uid="uid://hy6xta0c4vis" path="res://scene/Counter.cs" id="1_ldtc6"]
+[ext_resource type="Script" uid="uid://hy6xta0c4vis" path="res://scripts/Counter.cs" id="1_ldtc6"]
 [ext_resource type="FontFile" uid="uid://or0bbbooyqtt" path="res://resource/PressStart2P-1.ttf" id="2_1p1vy"]
 [ext_resource type="Texture2D" uid="uid://d27gothm4ojcx" path="res://resource/UnitShadepng.png" id="2_fgcbg"]
-[ext_resource type="Script" uid="uid://do7bdduu6lv8x" path="res://scene/UpperLayer.cs" id="2_rrxse"]
+[ext_resource type="Script" uid="uid://do7bdduu6lv8x" path="res://scripts/UpperLayer.cs" id="2_rrxse"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_qg2o6"]
 font = ExtResource("2_1p1vy")
