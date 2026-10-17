@@ -19,7 +19,9 @@ public partial class FloatingDescription : Control
 
     private Vector2 _lastMousePos = new Vector2();
     [Export] public float SpeedThreshold = 100f; // 速度阈值，可根据需要调整
-    [Export] public float TimerForShow = 0f; // 更新间隔，单位为秒]
+    private float _timerForShow = 0f; // 更新间隔，单位为秒
+    [Export] public float UpdateInterval = 0.5f; // 更新间隔，单位为秒
+
 
 
 
@@ -59,20 +61,19 @@ public partial class FloatingDescription : Control
         Vector2 mousePos = GetGlobalMousePosition();
         float dist = (mousePos - _lastMousePos).Length();
         float speed = dist / (float)delta;
-        GD.Print($"Mouse speed: {speed}, {SpeedThreshold * 5}"); // 打印鼠标速度，便于调试
 
 
         if (speed < SpeedThreshold * 5) // 速度阈值，可根据需要调整
         {
             if (!Visible)
             {
-                TimerForShow += (float)delta;
+                _timerForShow += (float)delta;
             }
 
-            if (TimerForShow > 0.5f)
+            if (_timerForShow > UpdateInterval)
             {
                 Show();
-                TimerForShow = 0f; // 重置计时器
+                _timerForShow = 0f; // 重置计时器
             }
             
         }
