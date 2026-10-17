@@ -1,12 +1,14 @@
 using Godot;
 using System;
 
-public partial class AttackButtonHl : TextureRect
+public partial class ButtonHl : TextureRect
 {
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
         MouseFilter = MouseFilterEnum.Ignore;
+
+		GD.Print(GetHashCode());
     }
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

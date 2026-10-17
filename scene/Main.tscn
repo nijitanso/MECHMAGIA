@@ -15,13 +15,15 @@
 [ext_resource type="Script" uid="uid://nru6pwl4jp5k" path="res://scripts/PanelContainer1.cs" id="11_764rb"]
 [ext_resource type="Script" uid="uid://jksi4btbecwy" path="res://scripts/AttackMessage.cs" id="11_x4yfu"]
 [ext_resource type="Script" uid="uid://20l3kgfvxgtv" path="res://scripts/Gui.cs" id="13_8cuns"]
+[ext_resource type="Texture2D" uid="uid://y4j51uc3fcww" path="res://resource/GUI-UndoButtonIcon.png" id="14_uiejy"]
 [ext_resource type="Script" uid="uid://cohwiontnyc3o" path="res://scripts/UI/Button/AttackButton.cs" id="15_1dr5g"]
 [ext_resource type="Script" uid="uid://d306ofo5s4nek" path="res://scripts/TurnLabel.cs" id="15_3hqfm"]
+[ext_resource type="Script" uid="uid://cprty4rcr10is" path="res://scripts/UI/Button/UndoButton.cs" id="15_dq3mc"]
 [ext_resource type="Texture2D" uid="uid://dvfn3x27tsbo4" path="res://resource/NextTurnGif.png" id="15_tuai4"]
 [ext_resource type="Script" uid="uid://nyvpmuemmt3w" path="res://scripts/PhaseLabel.cs" id="16_08k7p"]
 [ext_resource type="Script" uid="uid://hn5f7thhw64" path="res://scripts/NextTurnGif.cs" id="16_ob58h"]
 [ext_resource type="Texture2D" uid="uid://cupogu0q6atd2" path="res://resource/GUI-ButtonHighlight.png" id="16_wosyn"]
-[ext_resource type="Script" uid="uid://bkqrbh3l201p6" path="res://scripts/UI/Button/AttackButtonHl.cs" id="17_wosyn"]
+[ext_resource type="Script" uid="uid://bkqrbh3l201p6" path="res://scripts/UI/Button/ButtonHl.cs" id="17_wosyn"]
 [ext_resource type="Texture2D" uid="uid://dvod7vvpg7k3d" path="res://resource/GUI-AttackIcon.png" id="20_gjnlk"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
@@ -141,6 +143,29 @@ script = ExtResource("13_8cuns")
 offset_left = 1104.0
 offset_right = 1156.0
 offset_bottom = 448.0
+theme_override_constants/separation = -373
+
+[node name="MarginContainer2" type="MarginContainer" parent="GUI/VBoxContainer" unique_id=2044366928]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 10
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+
+[node name="UndoButton" type="TextureRect" parent="GUI/VBoxContainer/MarginContainer2" unique_id=1174952653]
+layout_mode = 2
+texture = ExtResource("14_uiejy")
+script = ExtResource("15_dq3mc")
+
+[node name="ButtonHL2" type="TextureRect" parent="GUI/VBoxContainer/MarginContainer2/UndoButton" unique_id=985805496]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 416.0
+offset_right = 42.0
+offset_bottom = 448.0
+texture = ExtResource("16_wosyn")
+script = ExtResource("17_wosyn")
 
 [node name="MarginContainer" type="MarginContainer" parent="GUI/VBoxContainer" unique_id=1971172792]
 layout_mode = 2
@@ -154,11 +179,13 @@ layout_mode = 2
 texture = ExtResource("20_gjnlk")
 script = ExtResource("15_1dr5g")
 
-[node name="AttackButtonHL" type="TextureRect" parent="GUI/VBoxContainer/MarginContainer/AttackButton" unique_id=985805496]
+[node name="ButtonHL1" type="TextureRect" parent="GUI/VBoxContainer/MarginContainer/AttackButton" unique_id=833988021]
 visible = false
 layout_mode = 0
-offset_right = 32.0
-offset_bottom = 32.0
+offset_left = 20.0
+offset_top = 794.0
+offset_right = 52.0
+offset_bottom = 826.0
 texture = ExtResource("16_wosyn")
 script = ExtResource("17_wosyn")
 

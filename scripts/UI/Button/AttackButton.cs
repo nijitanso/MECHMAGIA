@@ -16,6 +16,9 @@ public partial class AttackButton : ButtonBase
 
         MouseFilter = MouseFilterEnum.Stop;
 
+        GD.Print(_buttonHL.GetHashCode());
+
+
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
