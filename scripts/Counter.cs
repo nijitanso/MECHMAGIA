@@ -1,12 +1,12 @@
 using Data;
 using Godot;
-using Managers;
 using Godot.Collections;
+using HexGrid;
+using Managers;
 using System;
 using System.Collections.Generic;
 using APC = ActionProcessor.AttackProcessor;
 using TM = Managers.TurnManager;
-using HexGrid;
 
 /// <summary>
 /// 地图上的算子节点，负责显示、选中、移动、堆叠与战斗结果处理
@@ -711,7 +711,7 @@ public partial class Counter : Area2D
         GetRightStackPosition(pos);
 
         /*
-        foreach (var i in ParentStack.Units)
+        foreach (var i in ParentStack.Counters)
         {
             GD.Print(i.ID);
         }
@@ -813,6 +813,14 @@ public partial class Counter : Area2D
             UnitInfo.AttackLeft = UnitInfo.MaxAttack;
             CheckCanAttack();
         }
+    }
+
+    /// <summary>
+    /// 当UnitInfo的Coor更新时，手动调用这个方法来同步刷新Counter的Position
+    /// </summary>
+    public void RefreshPosition()
+    {
+        Position = _map.MapToLocal(UnitInfo.Coor);
     }
 
     /// <summary>

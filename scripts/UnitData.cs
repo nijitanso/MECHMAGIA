@@ -72,6 +72,26 @@ namespace Data
             }
         }
 
+        /// <summary>
+        /// 复制一个UnitInfo
+        /// </summary>
+        /// <param name="other"></param>
+        public UnitInfo(UnitInfo other)
+        {
+            ID = other.ID;
+            PosX = other.PosX;
+            PosY = other.PosY;
+            Team = other.Team;
+            AP = other.AP;
+            DP = other.DP;
+            MP = other.MP;
+            StackIndex = other.StackIndex;
+            MoveLeft = other.MoveLeft;
+            MaxMove = other.MaxMove;
+            AttackLeft = other.AttackLeft;
+            MaxAttack = other.MaxAttack;
+        }
+
         public int ID { get; set; }
         public int PosX { get; set; }
         public int PosY { get; set; }

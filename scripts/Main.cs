@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.JavaScript;
 
+using SM = Managers.StateManager;
+
 public partial class Main : Node2D
 {
     // 对节点的引用
@@ -15,7 +17,7 @@ public partial class Main : Node2D
     private Map _map;
     private Gui _gui;
 
-    public Dictionary<int, Counter> Units { get; set; } = new Dictionary<int, Counter>();   // 用于储存挂载在场景树的Counter实例的字典，用UnitInfo的Id来索引 
+    public Dictionary<int, Counter> Counters { get; set; } = new Dictionary<int, Counter>();   // 用于储存挂载在场景树的Counter实例的字典，用UnitInfo的Id来索引 
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -31,6 +33,7 @@ public partial class Main : Node2D
 
         _map.StackReady += BindCounterWithStack;  // 将算子与栈绑定的方法绑定到Map的StackReady事件上，这样当栈准备好时就会调用这个方法
         _map.QuitStack += RestoreCounterModulate;  // 将算子Modulate还原的方法绑定到Map的QuitStack事件上，这样当鼠标离开栈时就会调用这个方法
+        _map.SelectCoorForMain += SaveState;  // 将保存状态的方法绑定到Map的SelectCoorForMain事件上，这样当鼠标点击地格时就会调用这个方法
 
         Init(); // 初始化
 
@@ -78,7 +81,7 @@ public partial class Main : Node2D
             if (counter != null)
             {
                 // 将这个创建好的Counter实例加入字典和挂载到Main节点下
-                Units[unit.ID] = counter;
+                Counters[unit.ID] = counter;
                 this.AddChild(counter);
             }
             else
@@ -93,6 +96,17 @@ public partial class Main : Node2D
 
     }
 
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is InputEventKey keyEvent)
+        {
+            if (keyEvent.Keycode == Key.Z && keyEvent.CtrlPressed && keyEvent.Pressed)
+            {
+                SM.Inst.UndoState(this);
+            }
+        }
+    }
+
     /// <summary>
     /// 事件处理器，响应counter的RemoveCounter事件。将事件传入的Counter实例从场景树上移除
     /// </summary>
@@ -102,7 +116,7 @@ public partial class Main : Node2D
         counter.UnitInfo.Coor = new Vector2I(-999, -999);   // 移动到“弃牌堆”（不是
         counter.IsMultiSelect = true;
         RemoveChild(counter);
-        Units.Remove(counter.UnitInfo.ID);
+        Counters.Remove(counter.UnitInfo.ID);
 
         OnUnitsUpdate();
     }
@@ -117,10 +131,10 @@ public partial class Main : Node2D
     /// <param name="m"></param>
     public void MoveUnitInStack(UnitInfo sU, UnitInfo tU, int i, int m)
     {
-        Counter sCounter = Units[sU.ID];
+        Counter sCounter = Counters[sU.ID];
         sCounter.MoveInStack(m);
 
-        Counter tCounter = Units[tU.ID];
+        Counter tCounter = Counters[tU.ID];
         tCounter.MoveInStack(i);
     }
 
@@ -135,7 +149,7 @@ public partial class Main : Node2D
 
         foreach (var unit in stack.Units)
         {
-            Counter counter = Units[unit.ID];
+            Counter counter = Counters[unit.ID];
             counter.ZIndex = stack.UnitIndexOf(unit);  // 将算子的ZIndex设为它在栈中的索引值，这样就可以实现算子堆叠的视觉效果
 
             if (counter.ZIndex != stack.GetCount() - 1)
@@ -157,9 +171,12 @@ public partial class Main : Node2D
     {
         foreach (var stack in stacks.Values)
         {
-            Counter counter = Units[stack.Units[0].ID];    // 之所以要索引0是因为此时所有堆叠都只有一个单位，自然取第一个
-            counter.ParentStack = stack;
-            counter.ParentStack.StackChanged += counter.StackChanged;
+            foreach (var unit in stack.Units)
+            {
+                Counter counter = Counters[unit.ID];
+                counter.ParentStack = stack;
+                counter.ParentStack.StackChanged += counter.StackChanged;
+            }
         }
     }
 
@@ -168,7 +185,7 @@ public partial class Main : Node2D
     /// </summary>
     public void RestoreCounterModulate()
     {
-        foreach (var counter in Units.Values)
+        foreach (var counter in Counters.Values)
         {
             counter.Modulate = new Color(1, 1, 1, 1);
         }
@@ -183,13 +200,21 @@ public partial class Main : Node2D
     {
         if (stack == null) return;
 
-        stack.HighLight(Units, hoveringUnit);
+        stack.HighLight(Counters, hoveringUnit);
+    }
+
+    /// <summary>
+    /// 事件处理器，响应Map的SelectCoorForMain事件。当鼠标点击地格时（算子移动），将当前的游戏状态保存到StateManager的快照序列中
+    /// </summary>
+    public void SaveState()
+    {
+        SM.Inst.SaveState(Counters);
     }
 
     public void OnUnitsUpdate()
     {
         // 因为要传一个序列，所以要转成Godot的内置序列（可以被Variant类型容纳），接收参数的一方再转回C#原生类型
-        EmitSignal(SignalName.UnitsUpdate, new Godot.Collections.Array<Counter>(Units.Values));
+        EmitSignal(SignalName.UnitsUpdate, new Godot.Collections.Array<Counter>(Counters.Values));
     }
 
 

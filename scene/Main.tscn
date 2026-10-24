@@ -158,12 +158,11 @@ layout_mode = 2
 texture = ExtResource("14_uiejy")
 script = ExtResource("15_dq3mc")
 
-[node name="ButtonHL2" type="TextureRect" parent="GUI/VBoxContainer/MarginContainer2/UndoButton" unique_id=985805496]
+[node name="ButtonHL2" type="TextureRect" parent="GUI/VBoxContainer/MarginContainer2/UndoButton" unique_id=77999797]
+visible = false
 layout_mode = 0
-offset_left = 10.0
-offset_top = 416.0
-offset_right = 42.0
-offset_bottom = 448.0
+offset_right = 32.0
+offset_bottom = 32.0
 texture = ExtResource("16_wosyn")
 script = ExtResource("17_wosyn")
 
@@ -179,13 +178,11 @@ layout_mode = 2
 texture = ExtResource("20_gjnlk")
 script = ExtResource("15_1dr5g")
 
-[node name="ButtonHL1" type="TextureRect" parent="GUI/VBoxContainer/MarginContainer/AttackButton" unique_id=833988021]
+[node name="ButtonHL1" type="TextureRect" parent="GUI/VBoxContainer/MarginContainer/AttackButton" unique_id=1290745986]
 visible = false
 layout_mode = 0
-offset_left = 20.0
-offset_top = 794.0
-offset_right = 52.0
-offset_bottom = 826.0
+offset_right = 32.0
+offset_bottom = 32.0
 texture = ExtResource("16_wosyn")
 script = ExtResource("17_wosyn")
 

@@ -8,7 +8,6 @@ public partial class ButtonHl : TextureRect
 	{
         MouseFilter = MouseFilterEnum.Ignore;
 
-		GD.Print(GetHashCode());
     }
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

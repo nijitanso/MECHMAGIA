@@ -1,6 +1,9 @@
 using Godot;
 using System;
 
+/// <summary>
+/// 是游戏内大部分UI按钮空间的基类
+/// </summary>
 public partial class ButtonBase : TextureRect
 {
     public bool IsHovering { get; set; } = false;

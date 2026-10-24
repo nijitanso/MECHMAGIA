@@ -187,7 +187,7 @@ public partial class Camera2d : Camera2D
     /// <param name="team"></param>
     public void MoveToCorrTeam(TeamEnum team)
     {
-        List<Counter> Counters = _main.Units.Values.ToList();
+        List<Counter> Counters = _main.Counters.Values.ToList();
         int minId = int.MaxValue;
         Counter target = new Counter();
 

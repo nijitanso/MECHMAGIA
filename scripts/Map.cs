@@ -221,6 +221,37 @@ public partial class Map : TileMapLayer
     }
 
     /// <summary>
+    /// 刷新所有算子堆叠的状态
+    /// </summary>
+    /// <param name="units"></param>
+    public void RefreshUnitStacks(Godot.Collections.Array<Counter> units)
+    {
+        UnitStacks.Clear();
+
+        foreach (var unit in units)
+        {
+            // 还没堆叠就先创建，有了就直接乱序插入算子
+            if (UnitStacks.TryGetValue(unit.UnitInfo.Coor, out var stack))
+            {
+                stack.AddUnit(unit.UnitInfo);
+            }
+            else
+            {
+                UnitStacks[unit.UnitInfo.Coor] = new UnitStack(unit.UnitInfo, unit.Position, _main);
+            }
+        }
+
+        // 重新排序每个堆叠中的算子
+        foreach (var stack in UnitStacks.Values)
+        {
+            stack.SortUnitsByStackIndex();
+        }
+
+        OnStackReady(UnitStacks);
+
+    }
+
+    /// <summary>
     /// 将CoorWithUnit序列中敌我算子分开，考虑到有可能复用就用方法封装了
     /// </summary>
     /// <param name="friendCoors"></param>
@@ -883,11 +914,12 @@ public partial class Map : TileMapLayer
         List<Vector2I> path = BulidValidPath(coor);
 
 
-
+        EmitSignal(SignalName.SelectCoorForMain);   // Main节点收到的信号没有参数且需要更早处理
         EmitSignal(SignalName.SelectCoor, new Godot.Collections.Array<Vector2I>(path), stack);
 
     }
 
+    [Signal] public delegate void SelectCoorForMainEventHandler();
 
 
     [Signal] public delegate void ClickCoorEventHandler(Vector2I coor);

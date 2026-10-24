@@ -148,6 +148,14 @@ namespace Data
         }
 
         /// <summary>
+        /// 按算子的StackIndex升序排列
+        /// </summary>
+        public void SortUnitsByStackIndex()
+        {
+            Units.Sort((a, b) => a.StackIndex.CompareTo(b.StackIndex)); // 升序排列
+        }
+
+        /// <summary>
         /// 在传入的总算子实例里遍历本堆叠中的部分算子，将悬停的算子设置为不透明，而其余算子设置为半透明。
         /// 之所以要由Main.HighlightFromStack来调用是因为只有它持有总算子实例的序列
         /// </summary>

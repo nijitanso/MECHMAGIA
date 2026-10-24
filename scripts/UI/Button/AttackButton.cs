@@ -16,7 +16,6 @@ public partial class AttackButton : ButtonBase
 
         MouseFilter = MouseFilterEnum.Stop;
 
-        GD.Print(_buttonHL.GetHashCode());
 
 
     }
