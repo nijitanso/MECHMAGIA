@@ -201,7 +201,7 @@ public partial class Counter : Area2D
         TM.Inst.NextPhase += ChangePhrase;
 
         // 而这两个事件则是则是二选一触发，也就是说会触发两个事件
-        TM.Inst.SwitchToMovementPhase += RefreshMovement;
+        TM.Inst.SwitchToMovementPhase += RefreshMovementPhase;
         TM.Inst.SwitchToAttackPhase += RefreshAttack;
 
 
@@ -532,12 +532,9 @@ public partial class Counter : Area2D
         OnMoveUnit();
 
         UnitInfo.MoveLeft -= 1;
-        SelectUnit -= _map.GetHexMpList;    // 没有移动机会后就不需要计算移动范围和显示绿色高光了
 
-        if (UnitInfo.MoveLeft == 0)
-        {
-            CanActionIcon.Visible = false;
-        }
+        DisconnectMovement();   // 没有移动机会后就不需要计算移动范围和显示绿色高光了
+        
 
 
         return position;
@@ -786,19 +783,41 @@ public partial class Counter : Area2D
     }
 
     /// <summary>
+    /// 为算子重新绑定移动范围计算事件处理器，并显示可行动图标
+    /// </summary>
+    public void RefreshMovement()
+    {
+        SelectUnit += _map.GetHexMpList;
+
+        // 设置可行动图标
+        CanActionIcon.Visible = true;
+        CanActionIcon.Modulate = new Color("#52AB70");
+    }
+
+    /// <summary>
+    /// 当剩余移动次数为0时断开事件连接和可移动图标
+    /// </summary>
+    public void DisconnectMovement()
+    {
+        if (UnitInfo.MoveLeft == 0)
+        {
+            SelectUnit -= _map.GetHexMpList;
+            CanActionIcon.Visible = false;
+        }
+        
+    }
+
+
+    /// <summary>
     /// 进入移动阶段时，为己方算子恢复移动次数并显示可行动图标
     /// </summary>
     /// <param name="team">当前行动阵营</param>
-    public void RefreshMovement(TeamEnum team)
+    public void RefreshMovementPhase(TeamEnum team)
     {
         if (UnitInfo.Team == team)
         {
             UnitInfo.MoveLeft = UnitInfo.MaxMove;
-            SelectUnit += _map.GetHexMpList;    // 是本阵营移动轮则可以在点击算子时通知map计算可移动范围
-
-            // 设置可行动图标
-            CanActionIcon.Visible = true;
-            CanActionIcon.Modulate = new Color("#52AB70");
+            RefreshMovement();
         }
     }
 

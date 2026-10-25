@@ -123,6 +123,7 @@ public partial class Map : TileMapLayer
         // 响应UnitsUpdate事件，更新算子在地图上的状态
         _main.UnitsUpdate += UnitInitAndUPdate;
         _main.UnitsUpdate += AddGraph;
+        _main.UndoState += RefreshUnitStacks;
 
 
         //ShowTestMessage();
@@ -208,14 +209,9 @@ public partial class Map : TileMapLayer
     {
         if (!IsUnitStacksExisted)
         {
-            foreach (var unit in units)
-            {
-                // 这一步只是在stack实例所维护的序列中加入UnitInfo
-                UnitStacks[unit.UnitInfo.Coor] = new UnitStack(unit.UnitInfo, unit.Position, _main);    
-            }
+            RefreshUnitStacks(units);
 
             IsUnitStacksExisted = true; // 更新状态
-            OnStackReady(UnitStacks);
         }
 
     }
@@ -226,6 +222,7 @@ public partial class Map : TileMapLayer
     /// <param name="units"></param>
     public void RefreshUnitStacks(Godot.Collections.Array<Counter> units)
     {
+        GD.Print("114514");
         UnitStacks.Clear();
 
         foreach (var unit in units)

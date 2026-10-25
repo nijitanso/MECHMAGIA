@@ -103,6 +103,7 @@ public partial class Main : Node2D
             if (keyEvent.Keycode == Key.Z && keyEvent.CtrlPressed && keyEvent.Pressed)
             {
                 SM.Inst.UndoState(this);
+                OnUndoState();
             }
         }
     }
@@ -220,5 +221,13 @@ public partial class Main : Node2D
 
     [Signal] public delegate void UnitsUpdateEventHandler(Godot.Collections.Array<Counter> units);
 
+
+    public void OnUndoState()
+    {
+        EmitSignal(SignalName.UndoState, new Godot.Collections.Array<Counter>(Counters.Values));
+    }
+
+
+    [Signal] public delegate void UndoStateEventHandler(Godot.Collections.Array<Counter> units);
 
 }

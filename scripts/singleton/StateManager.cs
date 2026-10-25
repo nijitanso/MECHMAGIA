@@ -15,6 +15,7 @@ namespace Managers
         public static StateManager Inst { get; private set; }
 
         public List<StateSnapshot> states = [];
+        public bool IsUndone { get; set; } = false;
 
         public override void _EnterTree()
         {
@@ -38,6 +39,7 @@ namespace Managers
         /// <param name="main"></param>
         public void UndoState(Main main)
         {
+
             GD.Print("Undoing state snapshot");
             if (states.Count > 0)
             {
@@ -45,23 +47,35 @@ namespace Managers
                 StateSnapshot lastState = states[^1];
                 states.RemoveAt(states.Count - 1);
 
+                SaveState(main.Counters);   // 将当前状态保存为新的快照，以便之后可以再次还原，撤回只能一步
+
                 // 恢复算子位置和移动力
                 foreach (var id in main.Counters.Keys)
                 {
-                    main.Counters[id].UnitInfo.Coor = lastState.Units[id].Coor;
+                    UnitInfo unitInfo = main.Counters[id].UnitInfo;
+
+                    unitInfo.Coor = lastState.Units[id].Coor;
                     main.Counters[id].RefreshPosition();  // 刷新算子在场景中的位置
-                    main.Counters[id].UnitInfo.MoveLeft = lastState.Units[id].MoveLeft;
-                    main.Counters[id].UnitInfo.StackIndex = lastState.Units[id].StackIndex;
+
+                    unitInfo.MoveLeft = lastState.Units[id].MoveLeft;
+                    if (IsUndone)
+                    {
+                        main.Counters[id].DisconnectMovement();  // 如果是撤回到之前的状态，就断开算子与移动力的事件连接和可移动图标)
+                    }
+                    else
+                    {
+                        main.Counters[id].RefreshMovement();  // 刷新算子在场景中的移动性
+                    }
+
+                    unitInfo.StackIndex = lastState.Units[id].StackIndex;
                 }
 
             }
+
+            IsUndone = !IsUndone;  // 对此时撤回状态的标记取反，以便下一次撤回时可以正确刷新算子在场景中的移动性
+
         }
-
-        
-
     }
-
-    
 }
 
 namespace Data
