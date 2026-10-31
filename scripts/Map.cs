@@ -123,7 +123,7 @@ public partial class Map : TileMapLayer
         // 响应UnitsUpdate事件，更新算子在地图上的状态
         _main.UnitsUpdate += UnitInitAndUPdate;
         _main.UnitsUpdate += AddGraph;
-        _main.UndoState += RefreshUnitStacks;
+        _main.UndoStateEvent += RefreshUnitStacks;
 
 
         //ShowTestMessage();

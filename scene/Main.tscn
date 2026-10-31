@@ -21,7 +21,7 @@
 [ext_resource type="Script" uid="uid://cprty4rcr10is" path="res://scripts/UI/Button/UndoButton.cs" id="15_dq3mc"]
 [ext_resource type="Texture2D" uid="uid://dvfn3x27tsbo4" path="res://resource/NextTurnGif.png" id="15_tuai4"]
 [ext_resource type="Script" uid="uid://nyvpmuemmt3w" path="res://scripts/PhaseLabel.cs" id="16_08k7p"]
-[ext_resource type="Script" uid="uid://hn5f7thhw64" path="res://scripts/NextTurnGif.cs" id="16_ob58h"]
+[ext_resource type="Script" uid="uid://hn5f7thhw64" path="res://scripts/UI/NextTurnGif.cs" id="16_ob58h"]
 [ext_resource type="Texture2D" uid="uid://cupogu0q6atd2" path="res://resource/GUI-ButtonHighlight.png" id="16_wosyn"]
 [ext_resource type="Script" uid="uid://bkqrbh3l201p6" path="res://scripts/UI/Button/ButtonHl.cs" id="17_wosyn"]
 [ext_resource type="Texture2D" uid="uid://dvod7vvpg7k3d" path="res://resource/GUI-AttackIcon.png" id="20_gjnlk"]

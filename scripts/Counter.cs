@@ -177,6 +177,8 @@ public partial class Counter : Area2D
 
         if (UnitInfo.MoveLeft != 0)  // 初始化时有移动机会才会绑定这个信号
         {
+            // 标准做法，防止重复绑定（C#的多播委托）
+            SelectUnit -= _map.GetHexMpList;
             SelectUnit += _map.GetHexMpList;    // 调用计算最小路径的方法，获取算子移动范围，并显示绿色高光
         }
 
@@ -402,6 +404,8 @@ public partial class Counter : Area2D
                 {
                     Select();
                     UpToStackTop();
+
+                    GD.Print(UnitInfo.MoveLeft);
                 }
 
             }
@@ -787,11 +791,17 @@ public partial class Counter : Area2D
     /// </summary>
     public void RefreshMovement()
     {
-        SelectUnit += _map.GetHexMpList;
+        if (UnitInfo.MoveLeft != 0)
+        {
+            GD.Print("刷新移动范围");
+            SelectUnit -= _map.GetHexMpList;
+            SelectUnit += _map.GetHexMpList;
 
-        // 设置可行动图标
-        CanActionIcon.Visible = true;
-        CanActionIcon.Modulate = new Color("#52AB70");
+            // 设置可行动图标
+            CanActionIcon.Visible = true;
+            CanActionIcon.Modulate = new Color("#52AB70");
+        }
+        
     }
 
     /// <summary>
@@ -799,8 +809,10 @@ public partial class Counter : Area2D
     /// </summary>
     public void DisconnectMovement()
     {
-        if (UnitInfo.MoveLeft == 0)
+        if (UnitInfo.MoveLeft <= 0)
         {
+            GD.Print("断114");
+
             SelectUnit -= _map.GetHexMpList;
             CanActionIcon.Visible = false;
         }

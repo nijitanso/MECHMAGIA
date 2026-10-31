@@ -222,7 +222,7 @@ namespace Managers
             // 等待所有节点被加载进场景树后进行初始化
             CallDeferred(nameof(InitializeNode));
 
-            ShowTestMessage();
+            //ShowTestMessage();
 
         }
 

@@ -38,9 +38,8 @@ public partial class ButtonBase : TextureRect
     /// <summary>
     /// 鼠标左键释放时触发，实际是触发效果的方法
     /// </summary>
-    public void Release()
+    public virtual void Release()
     {
-        GD.Print("AttackButton Released");
         Modulate = new Color(1, 1, 1, 1); // 松开鼠标时恢复为不透明
 
         // 因为按下时将高光隐藏了，所以松开时要重新显示高光，如果鼠标仍然悬停在按钮上

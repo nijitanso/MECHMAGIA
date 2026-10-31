@@ -31,6 +31,7 @@ namespace Managers
             GD.Print("Saving state snapshot");
             StateSnapshot state = new(counters);
             states.Add(state);
+
         }
 
         /// <summary>
@@ -60,7 +61,7 @@ namespace Managers
                     unitInfo.MoveLeft = lastState.Units[id].MoveLeft;
                     if (IsUndone)
                     {
-                        main.Counters[id].DisconnectMovement();  // 如果是撤回到之前的状态，就断开算子与移动力的事件连接和可移动图标)
+                        main.Counters[id].DisconnectMovement();  // 如果是撤回到之前的状态，就断开算子与移动力的事件连接和可移动图标
                     }
                     else
                     {
@@ -69,10 +70,9 @@ namespace Managers
 
                     unitInfo.StackIndex = lastState.Units[id].StackIndex;
                 }
-
             }
 
-            IsUndone = !IsUndone;  // 对此时撤回状态的标记取反，以便下一次撤回时可以正确刷新算子在场景中的移动性
+            IsUndone = !IsUndone;  
 
         }
     }

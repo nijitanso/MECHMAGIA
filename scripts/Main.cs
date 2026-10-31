@@ -16,6 +16,7 @@ public partial class Main : Node2D
     private Node _friendUnits;
     private Map _map;
     private Gui _gui;
+    private UndoButton _undoButton;
 
     public Dictionary<int, Counter> Counters { get; set; } = new Dictionary<int, Counter>();   // 用于储存挂载在场景树的Counter实例的字典，用UnitInfo的Id来索引 
 
@@ -28,12 +29,14 @@ public partial class Main : Node2D
         _friendUnits = GetNode<Node>("FriendUnits");
         _map = GetNode<Map>("Map");
         _gui = GetNode<Gui>("GUI");
+        _undoButton = _gui.GetNode<UndoButton>("VBoxContainer/MarginContainer2/UndoButton");
 
         UnitDataJson.Initialize();  // 从JSON中获取单位的数据，将数据存储到UnitData这个静态类中（但似乎这个类意义并不大，因为数据全在UnitInfo实例里）
 
         _map.StackReady += BindCounterWithStack;  // 将算子与栈绑定的方法绑定到Map的StackReady事件上，这样当栈准备好时就会调用这个方法
         _map.QuitStack += RestoreCounterModulate;  // 将算子Modulate还原的方法绑定到Map的QuitStack事件上，这样当鼠标离开栈时就会调用这个方法
         _map.SelectCoorForMain += SaveState;  // 将保存状态的方法绑定到Map的SelectCoorForMain事件上，这样当鼠标点击地格时就会调用这个方法
+        _undoButton.TryUndoState += UndoState;  // 将撤回状态的方法绑定到UndoButton的TryUndoState事件上，这样当点击撤回按钮时就会调用这个方法
 
         Init(); // 初始化
 
@@ -102,10 +105,15 @@ public partial class Main : Node2D
         {
             if (keyEvent.Keycode == Key.Z && keyEvent.CtrlPressed && keyEvent.Pressed)
             {
-                SM.Inst.UndoState(this);
-                OnUndoState();
+                UndoState();
             }
         }
+    }
+
+    public void UndoState()
+    {
+        SM.Inst.UndoState(this);
+        OnUndoStateEvent();
     }
 
     /// <summary>
@@ -210,6 +218,8 @@ public partial class Main : Node2D
     public void SaveState()
     {
         SM.Inst.SaveState(Counters);
+        SM.Inst.IsUndone = false;  // 每次保存状态时都将撤回状态标记重置为false,表示目前不处于撤回状态
+
     }
 
     public void OnUnitsUpdate()
@@ -222,12 +232,12 @@ public partial class Main : Node2D
     [Signal] public delegate void UnitsUpdateEventHandler(Godot.Collections.Array<Counter> units);
 
 
-    public void OnUndoState()
+    public void OnUndoStateEvent()
     {
-        EmitSignal(SignalName.UndoState, new Godot.Collections.Array<Counter>(Counters.Values));
+        EmitSignal(SignalName.UndoStateEvent, new Godot.Collections.Array<Counter>(Counters.Values));
     }
 
 
-    [Signal] public delegate void UndoStateEventHandler(Godot.Collections.Array<Counter> units);
+    [Signal] public delegate void UndoStateEventEventHandler(Godot.Collections.Array<Counter> units);
 
 }
