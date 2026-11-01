@@ -72,6 +72,7 @@ public partial class Main : Node2D
             // 创建Counter实例，将UnitInfo赋值给其属性，让其获得数据
             Counter counter = _counter.Instantiate<Counter>();
             counter.UnitInfo = unit;
+            unit.Counter = counter;  // 将Counter实例赋值给UnitInfo的Counter属性，这样UnitInfo就可以通过这个属性访问到它对应的Counter实例
 
             // 将每个算子的MoveUnit的事件都用UnitsUpdate的触发方法绑定，每次算子移动时都要通知节点们更新算子状态
             counter.MoveUnit += OnUnitsUpdate;
@@ -85,7 +86,7 @@ public partial class Main : Node2D
             {
                 // 将这个创建好的Counter实例加入字典和挂载到Main节点下
                 Counters[unit.ID] = counter;
-                this.AddChild(counter);
+                AddChild(counter);
             }
             else
             {

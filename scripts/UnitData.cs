@@ -90,6 +90,7 @@ namespace Data
             MaxMove = other.MaxMove;
             AttackLeft = other.AttackLeft;
             MaxAttack = other.MaxAttack;
+            Counter = other.Counter;
         }
 
         public int ID { get; set; }
@@ -127,7 +128,8 @@ namespace Data
 
         [JsonIgnore]
         public Rect2 Rect { get; set; } = new Rect2();
-
+        [JsonIgnore]
+        public Counter Counter { get; set; }
 
     }
 }

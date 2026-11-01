@@ -47,15 +47,6 @@ namespace Managers
             HoverState = HoverStateEnum.Counter;
         }
 
-        /// <summary>
-        /// 设置此时鼠标悬浮着的堆叠，并将IsStackHovered改为true
-        /// </summary>
-        /// <param name="stack"></param>
-        public void SetHoveringStack(UnitStack stack)
-        {
-            IsStackHovered = true;
-            HoveringStack = stack;
-        }
 
         /// <summary>
         /// 设置此时鼠标悬浮着的堆叠为null，并将IsStackHovered改为false
@@ -205,7 +196,7 @@ namespace Managers
         // 被选中或悬停的实例的具体属性
         public Vector2I SelectedMapCoor { get; set; }
         public List<UnitInfo> SelectedUnits { get; set; } = new List<UnitInfo>();
-        public UnitInfo HoveringUnit { get; set; } = new UnitInfo();    // 当HoveringUnit.ID == -1时，说明没有悬停的算子
+        public UnitInfo HoveringUnit { get; set; } = new UnitInfo() { ID = -1 };    // 当HoveringUnit.ID == -1时，说明没有悬停的算子
         public UnitStack HoveringStack { get; set; } = null;
 
 
@@ -246,7 +237,7 @@ namespace Managers
         // Called every frame. 'delta' is the elapsed time since the previous frame.
         public override void _Process(double delta)
         {
-
+            //CheckIsOnStack(_map.LocalToMap(_map.GetLocalMousePosition()));
 
             // 这里面是非常过时的代码
             ClickedMouseButton = (long)(Input.GetMouseButtonMask());
@@ -277,28 +268,31 @@ namespace Managers
 
         }
 
+
+
         /// <summary>
-        /// 用堆叠中算子所占据的矩形范围来判断鼠标是否在堆叠上
+        /// 用堆叠中算子所占据的矩形范围来判断鼠标是否在堆叠上， 如果在堆叠上就将HoveringStack设置为这个堆叠，并将IsStackHovered改为true
         /// </summary>
         /// <param name="pos"></param>
         /// <returns></returns>
-        public bool CheckIsOnStack(Vector2 pos)
+        public void CheckIsOnStack(Vector2 pos)
         {
-            if (HoveringStack == null)  return false;
+            if (HoveringUnit == _nullUnit) return;
 
-            List<Rect2> rects = HoveringStack.UnitRects;
+            List<Rect2> rects = HoveringUnit.Counter.ParentStack.UnitRects;
 
             foreach (var rect in rects)
             {
                 // 只要鼠标在任意矩形上即在堆叠上
                 if (rect.HasPoint(pos))
                 {
-                    return true;
+                    HoveringStack = HoveringUnit.Counter.ParentStack;
+                    IsStackHovered = true;
+                    return;
                 }
-
             }
 
-            return false;
+            return;
         }
 
         /// <summary>

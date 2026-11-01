@@ -26,44 +26,11 @@ namespace Data
 
             _main = main;
 
-            StackIncreasedTo2 += FormMask;
-            StackDecreasedTo1 += RemoveMask;
         }
 
-        /// <summary>
-        /// 堆叠数量增加到 2 时生成遮罩，并绑定鼠标进入/离开事件
-        /// </summary>
-        private void FormMask()
-        {
-            GD.Print("forming mask");
-            StackMask = _stackMask.Instantiate<Area2D>();
-            StackMask.Position = new Vector2(CoorPosition.X + 5, CoorPosition.Y - 5);
-            _main.AddChild(StackMask);
 
-            StackMask.MouseEntered += SetHoveringStack;
-            StackMask.MouseExited += MM.Inst.RemoveHoveringStack;
 
-        }
 
-        /// <summary>
-        /// 将当前堆叠设置为鼠标悬停的堆叠
-        /// </summary>
-        public void SetHoveringStack()
-        {
-            MM.Inst.SetHoveringStack(this);
-        }
-
-        /// <summary>
-        /// 堆叠数量减少到 1 时移除遮罩
-        /// </summary>
-        private void RemoveMask()
-        {
-            if (StackMask != null)
-            {
-                StackMask.QueueFree();
-                StackMask = null;
-            }
-        }
 
         /// <summary>
         /// 堆叠中包含的所有算子
@@ -83,10 +50,7 @@ namespace Data
         /// 遮罩场景资源
         /// </summary>
         private PackedScene _stackMask;
-        /// <summary>
-        /// 当前显示的遮罩节点，未生成时为 null
-        /// </summary>
-        public Area2D StackMask { get; set; } = null;
+
         /// <summary>
         /// 主场景引用
         /// </summary>
@@ -103,11 +67,6 @@ namespace Data
             Units.Add(unit);
             UnitRects.Add(unit.Rect);
 
-            if (Units.Count > 1 && StackMask == null)
-            {
-                OnStackIncreasedTo2();
-            }
-
             OnStackChanged();
 
         }
@@ -119,12 +78,6 @@ namespace Data
         {
             Units.Remove(unit);
             UnitRects.Remove(unit.Rect);
-
-
-            if (Units.Count == 1)
-            {
-                OnStackDecreasedTo1();
-            }
 
             OnStackChanged();
         }
@@ -179,34 +132,6 @@ namespace Data
             }
         }
 
-
-
-
-        /// <summary>
-        /// 触发 StackIncreasedTo2 事件
-        /// </summary>
-        protected virtual void OnStackIncreasedTo2()
-        {
-            StackIncreasedTo2?.Invoke(); // ?.是null条件运算符，表示如果StackUpdated不为null，则调用它
-        }
-
-        /// <summary>
-        /// 堆叠数量增加到 2 时触发
-        /// </summary>
-        public event Action StackIncreasedTo2;
-
-        /// <summary>
-        /// 触发 StackDecreasedTo1 事件
-        /// </summary>
-        protected virtual void OnStackDecreasedTo1()
-        {
-            StackDecreasedTo1?.Invoke();
-        }
-
-        /// <summary>
-        /// 堆叠数量减少到 1 时触发
-        /// </summary>
-        public event Action StackDecreasedTo1;
 
         /// <summary>
         /// 触发 StackChanged 信号

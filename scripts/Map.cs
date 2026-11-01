@@ -359,7 +359,7 @@ public partial class Map : TileMapLayer
         if (@event is InputEventMouseButton mouseEvent)
         {
             // 判断左键时是否悬停在地图上
-            if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && !MM.Inst.CheckIsOnStack(mouseCoorPos) && !isHoveringCounter)
+            if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed && !MM.Inst.IsStackHovered && !isHoveringCounter)
             {
                 ClickCell(mouseCoorPos);
             }
