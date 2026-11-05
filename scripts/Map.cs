@@ -924,12 +924,14 @@ public partial class Map : TileMapLayer
     {
 
         if (MM.Inst.SelectedUnits.Count == 0 || MM.Inst.SelectedUnits.Count > 1) return;
-        GD.Print("调用");
 
         List<Vector2I> path = BulidValidPath(coor);
 
+        EmitSignal(SignalName.EnterStackForMain);   // Main节点收到的信号没有参数且需要更早处理
         EmitSignal(SignalName.EnterStack, coor, stack, new Godot.Collections.Array<Vector2I>(path));
     }
+
+    [Signal] public delegate void EnterStackForMainEventHandler();
 
     [Signal] public delegate void EnterStackEventHandler(Vector2I coor, UnitStack stack, Godot.Collections.Array<Vector2I> path);
 

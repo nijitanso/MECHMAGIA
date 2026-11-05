@@ -36,6 +36,7 @@ public partial class Main : Node2D
         _map.StackReady += BindCounterWithStack;  // 将算子与栈绑定的方法绑定到Map的StackReady事件上，这样当栈准备好时就会调用这个方法
         _map.QuitStack += RestoreCounterModulate;  // 将算子Modulate还原的方法绑定到Map的QuitStack事件上，这样当鼠标离开栈时就会调用这个方法
         _map.SelectCoorForMain += SaveState;  // 将保存状态的方法绑定到Map的SelectCoorForMain事件上，这样当鼠标点击地格时就会调用这个方法
+        _map.EnterStackForMain += SaveState;  // 将保存状态的方法绑定到Map的SelectCoorForMain事件上，这样当算子进入堆叠时就会调用这个方法
         _undoButton.TryUndoState += UndoState;  // 将撤回状态的方法绑定到UndoButton的TryUndoState事件上，这样当点击撤回按钮时就会调用这个方法
 
         Init(); // 初始化
@@ -111,11 +112,7 @@ public partial class Main : Node2D
         }
     }
 
-    public void UndoState()
-    {
-        SM.Inst.UndoState(this);
-        OnUnitsUpdate();  // 撤回状态后通知其他节点更新算子状态
-    }
+    
 
     /// <summary>
     /// 事件处理器，响应counter的RemoveCounter事件。将事件传入的Counter实例从场景树上移除
@@ -221,6 +218,19 @@ public partial class Main : Node2D
         SM.Inst.SaveState(Counters);
         SM.Inst.IsUndone = false;  // 每次保存状态时都将撤回状态标记重置为false,表示目前不处于撤回状态
 
+    }
+
+    public void UndoState()
+    {
+        SM.Inst.UndoState(this);
+
+        OnUnitsUpdate();  // 撤回状态后通知其他节点更新算子状态
+
+        // 撤回状态后要重新计算一下算子在堆叠中的碰撞体启用与否（必须在事件触发后遍历，不然新堆叠还没重建）
+        foreach (var counter in Counters.Values)
+        {
+            OrderingStack(counter.UnitInfo.Coor);
+        }
     }
 
     public void OnUnitsUpdate()
