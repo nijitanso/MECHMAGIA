@@ -202,7 +202,7 @@ public partial class Map : TileMapLayer
     }
 
     /// <summary>
-    /// 为所有在场的算子创建堆叠实例，并将算子加入
+    /// 为所有在场的算子创建/重建堆叠实例，并将算子加入
     /// </summary>
     /// <param name="units"></param>
     public void GetUnitStacks(Godot.Collections.Array<Counter> units)
@@ -222,7 +222,6 @@ public partial class Map : TileMapLayer
     /// <param name="units"></param>
     public void RefreshUnitStacks(Godot.Collections.Array<Counter> units)
     {
-        GD.Print("114514");
         UnitStacks.Clear();
 
         foreach (var unit in units)
@@ -901,10 +900,13 @@ public partial class Map : TileMapLayer
     {
         AxialCoor axialCoor = AxialCoor.OffsetToAxial(coor);
 
-        if (_canMoveCoors.Count == 0) return;
-        if (!_canMoveCoors.Contains(coor)) return;
-        if (CoorWithUnit.Contains((axialCoor, TeamEnum.Friend)) || CoorWithUnit.Contains((axialCoor, TeamEnum.Enemy))) return;
-        if (MM.Inst.SelectedUnits.Count == 0 || MM.Inst.SelectedUnits.Count > 1) return;
+        if (_canMoveCoors.Count == 0) return;   // 如果没有可移动地格就直接返回
+
+        if (!_canMoveCoors.Contains(coor)) return;  // 如果传入的地格不在可移动地格序列里就直接返回
+
+        if (CoorWithUnit.Contains((axialCoor, TeamEnum.Friend)) || CoorWithUnit.Contains((axialCoor, TeamEnum.Enemy))) return;  // 如果传入的地格上有算子就直接返回
+
+        if (MM.Inst.SelectedUnits.Count == 0 || MM.Inst.SelectedUnits.Count > 1) return;    // 如果没有选中算子或者选中多个算子就直接返回
 
         UnitStack stack = FormAStack(coor);
 
