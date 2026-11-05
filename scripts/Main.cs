@@ -114,7 +114,7 @@ public partial class Main : Node2D
     public void UndoState()
     {
         SM.Inst.UndoState(this);
-        OnUndoStateEvent();
+        OnUnitsUpdate();  // 撤回状态后通知其他节点更新算子状态
     }
 
     /// <summary>
