@@ -38,6 +38,7 @@ public partial class Main : Node2D
         _map.SelectCoorForMain += SaveState;  // 将保存状态的方法绑定到Map的SelectCoorForMain事件上，这样当鼠标点击地格时就会调用这个方法
         _map.EnterStackForMain += SaveState;  // 将保存状态的方法绑定到Map的SelectCoorForMain事件上，这样当算子进入堆叠时就会调用这个方法
         _undoButton.TryUndoState += UndoState;  // 将撤回状态的方法绑定到UndoButton的TryUndoState事件上，这样当点击撤回按钮时就会调用这个方法
+        _undoButton.TryRedoState += RedoState;  // 将还原状态的方法绑定到UndoButton的TryRedoState事件上，这样当点击撤回按钮时就会调用这个方法
 
         Init(); // 初始化
 
@@ -108,6 +109,11 @@ public partial class Main : Node2D
             if (keyEvent.Keycode == Key.Z && keyEvent.CtrlPressed && keyEvent.Pressed)
             {
                 UndoState();
+            }
+
+            if (keyEvent.Keycode == Key.Y && keyEvent.CtrlPressed && keyEvent.Pressed)
+            {
+                RedoState();
             }
         }
     }
@@ -216,13 +222,36 @@ public partial class Main : Node2D
     public void SaveState()
     {
         SM.Inst.SaveState(Counters);
-        SM.Inst.IsUndone = false;  // 每次保存状态时都将撤回状态标记重置为false,表示目前不处于撤回状态
+        _undoButton.FlipH = false;
 
     }
 
+    /// <summary>
+    /// 用键盘或按钮撤回状态
+    /// </summary>
     public void UndoState()
     {
-        SM.Inst.UndoState(this);
+        if (!SM.Inst.UndoState(this)) return;  // 如果撤回失败就直接返回
+
+        _undoButton.FlipButton();  // 撤回成功后翻转撤回按钮的状态
+
+        OnUnitsUpdate();  // 撤回状态后通知其他节点更新算子状态
+
+        // 撤回状态后要重新计算一下算子在堆叠中的碰撞体启用与否（必须在事件触发后遍历，不然新堆叠还没重建）
+        foreach (var counter in Counters.Values)
+        {
+            OrderingStack(counter.UnitInfo.Coor);
+        }
+    }
+
+    /// <summary>
+    /// 用键盘或按钮还原被撤回的状态
+    /// </summary>
+    public void RedoState()
+    {
+        if (!SM.Inst.RedoState(this)) return;  // 如果还原失败就直接返回
+
+        _undoButton.FlipButton();  // 撤回成功后翻转撤回按钮的状态
 
         OnUnitsUpdate();  // 撤回状态后通知其他节点更新算子状态
 

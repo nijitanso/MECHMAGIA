@@ -1,4 +1,5 @@
 using Godot;
+using Managers;
 using System;
 
 
@@ -9,7 +10,7 @@ public partial class UndoButton : ButtonBase
 	{
 		_buttonHL = GetChild<TextureRect>(0);
 
-		MouseEntered += Highlight;
+        MouseEntered += Highlight;
 		MouseEntered += Hovering;
 
 		MouseExited += Nothighlight;
@@ -17,40 +18,57 @@ public partial class UndoButton : ButtonBase
 
 		MouseFilter = MouseFilterEnum.Stop;
 
-		GD.Print(_buttonHL.GetHashCode());
+		TurnManager.Inst.NextPhase += () =>
+		{
+            FlipH = false;   // 当进入下一阶段时，将按钮翻转为撤回状态
+        };
 
-	}
+
+
+    }
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 	}
 
-	public bool IsUndone { get; set; } = false;
+
 
 
     public override void Release()
 	{
 		base.Release();
 
-		OnTryUndoState();   // 触发TryUndoState信号，通知Main节点尝试撤回状态（之所以不直接调用SM单例的方法是因为需要保存在Main的Counters序列）
-		if (IsUndone)
+		if (!FlipH)
 		{
-            FlipH = false;  
+            OnTryUndoState();   // 触发TryUndoState信号，通知Main节点尝试撤回状态（之所以不直接调用SM单例的方法是因为需要保存在Main的Counters序列）
         }
 		else
 		{
-            FlipH = true;   // 如果已经撤回了，将按钮反转，表示此时再按下就是恢复状态
+            OnTryRedoState();   // 触发TryRedoState信号，通知Main节点尝试恢复状态（之所以不直接调用SM单例的方法是因为需要保存在Main的Counters序列）
         }
 
-        IsUndone = !IsUndone;   // 切换状态
 
     }
 
-	public void OnTryUndoState()
+	public void FlipButton()
+	{
+        FlipH = !FlipH;
+    }
+
+
+
+    public void OnTryUndoState()
 	{
 		EmitSignal(SignalName.TryUndoState);
 	}
 
 	[Signal] public delegate void TryUndoStateEventHandler();
+
+    public void OnTryRedoState()
+    {
+        EmitSignal(SignalName.TryRedoState);
+    }
+
+    [Signal] public delegate void TryRedoStateEventHandler();
 }

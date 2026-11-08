@@ -14,66 +14,95 @@ namespace Managers
     {
         public static StateManager Inst { get; private set; }
 
-        public List<StateSnapshot> states = [];
+        public StateSnapshot LastState { get; set; } = null;
+        public StateSnapshot CurrentState { get; set; } = null;
         public bool IsUndone { get; set; } = false;
 
         public override void _EnterTree()
         {
             Inst = this;
+            TurnManager.Inst.NextPhase += ClearState;  // 每次进入下一阶段时清除所有保存的状态
         }
 
         /// <summary>
-        /// 往快照序列中压入一个快照
+        /// 保存当前游戏状态的快照
         /// </summary>
         /// <param name="counters"></param>
         public void SaveState(Dictionary<int, Counter> counters)
         {
             GD.Print("Saving state snapshot");
-            StateSnapshot state = new(counters);
-            states.Add(state);
+            LastState = new(counters);  // 保存是比实际操作快的，所以实际上保存的是操作前的状态
+            CurrentState = null;  // 保存状态时将当前状态清空，表示目前没有撤回的状态
+            IsUndone = false;  // 每次保存状态时都将撤回状态标记重置为false,表示目前不处于撤回状态
 
         }
 
         /// <summary>
-        /// 弹出最后一个快照，并将游戏状态（目前只是算子位置和移动力）恢复为弹出的那个快照所保存的状态
+        /// 将游戏状态（目前只是算子位置和移动力）撤回（应用LastState快照）。撤回成功将返回true
         /// </summary>
         /// <param name="main"></param>
-        public void UndoState(Main main)
+        public bool UndoState(Main main)
         {
-
             GD.Print("Undoing state snapshot");
-            if (states.Count > 0)
+            if (LastState == null || IsUndone) return false;
+
+            CurrentState = new(main.Counters);   // 将当前状态保存，以便之后可以再次还原，撤回只能一步
+            ApplyState(main, LastState);
+            IsUndone = true;
+            
+            return true;
+        }
+
+        /// <summary>
+        /// 恢复被撤回的状态（应用CurrentState快照）。恢复成功将返回true
+        /// </summary>
+        /// <param name="main"></param>
+        public bool RedoState(Main main)
+        {
+            GD.Print(IsUndone);
+            if (CurrentState == null || !IsUndone) return false;
+
+            ApplyState(main, CurrentState);
+            IsUndone = false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// 应用状态快照保存的信息
+        /// </summary>
+        /// <param name="main"></param>
+        public void ApplyState(Main main, StateSnapshot state)
+        {
+            foreach (var id in main.Counters.Keys)
             {
-                // 从末尾弹出最后一个状态快照
-                StateSnapshot lastState = states[^1];
-                states.RemoveAt(states.Count - 1);
+                UnitInfo unitInfo = main.Counters[id].UnitInfo;
 
-                SaveState(main.Counters);   // 将当前状态保存为新的快照，以便之后可以再次还原，撤回只能一步
+                unitInfo.Coor = state.Units[id].Coor;
+                main.Counters[id].RefreshPosition();  // 刷新算子在场景中的位置
 
-                // 恢复算子位置和移动力
-                foreach (var id in main.Counters.Keys)
+                unitInfo.MoveLeft = state.Units[id].MoveLeft;
+                if (IsUndone)
                 {
-                    UnitInfo unitInfo = main.Counters[id].UnitInfo;
-
-                    unitInfo.Coor = lastState.Units[id].Coor;
-                    main.Counters[id].RefreshPosition();  // 刷新算子在场景中的位置
-
-                    unitInfo.MoveLeft = lastState.Units[id].MoveLeft;
-                    if (IsUndone)
-                    {
-                        main.Counters[id].DisconnectMovement();  // 如果是撤回到之前的状态，就断开算子与移动力的事件连接和可移动图标
-                    }
-                    else
-                    {
-                        main.Counters[id].RefreshMovement();  // 刷新算子在场景中的移动性
-                    }
-
-                    unitInfo.StackIndex = lastState.Units[id].StackIndex;
+                    main.Counters[id].DisconnectMovement();  // 如果是撤回到之前的状态，就断开算子与移动力的事件连接和可移动图标
                 }
+                else
+                {
+                    main.Counters[id].RefreshMovement();  // 刷新算子在场景中的移动性
+                }
+
+                unitInfo.StackIndex = state.Units[id].StackIndex;
             }
-
-            IsUndone = !IsUndone;  
-
+        }
+        
+        /// <summary>
+        /// 清除所有保存的状态
+        /// </summary>
+        public void ClearState()
+        {
+            LastState = null;
+            CurrentState = null;
+            IsUndone = false;
         }
     }
 }
