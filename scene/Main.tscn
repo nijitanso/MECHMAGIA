@@ -25,6 +25,7 @@
 [ext_resource type="Texture2D" uid="uid://cupogu0q6atd2" path="res://resource/GUI-ButtonHighlight.png" id="16_wosyn"]
 [ext_resource type="Script" uid="uid://bkqrbh3l201p6" path="res://scripts/UI/Button/ButtonHl.cs" id="17_wosyn"]
 [ext_resource type="Texture2D" uid="uid://dvod7vvpg7k3d" path="res://resource/GUI-AttackIcon.png" id="20_gjnlk"]
+[ext_resource type="Script" uid="uid://c7bdqi5hayngw" path="res://scene/ActionLog.cs" id="22_hmh3n"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_pnqar")
@@ -214,6 +215,22 @@ size_flags_horizontal = 4
 text = "是的是的大苏打"
 label_settings = SubResource("LabelSettings_llu5k")
 script = ExtResource("11_x4yfu")
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="GUI" unique_id=934398731]
+offset_right = 208.0
+offset_bottom = 448.0
+
+[node name="PanelContainer" type="PanelContainer" parent="GUI/VBoxContainer2" unique_id=1149758107]
+custom_minimum_size = Vector2(50, 63.535)
+layout_mode = 2
+size_flags_vertical = 10
+
+[node name="ActionLog" type="RichTextLabel" parent="GUI/VBoxContainer2/PanelContainer" unique_id=1518009267]
+layout_mode = 2
+theme_override_colors/default_color = Color(0.67206675, 0.67206675, 0.67206675, 1)
+theme_override_font_sizes/normal_font_size = 10
+theme_override_font_sizes/italics_font_size = 10
+script = ExtResource("22_hmh3n")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="GUI" unique_id=1373751299]
 anchors_preset = -1

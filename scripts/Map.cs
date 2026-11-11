@@ -12,6 +12,8 @@ using System.Runtime;
 using System.Threading.Tasks;
 using APC = ActionProcessor.AttackProcessor;
 using MM = Managers.MouseManager;
+using LG = Generator.LogGenerator;
+
 public partial class Map : TileMapLayer
 {
     /// <summary>
@@ -368,16 +370,19 @@ public partial class Map : TileMapLayer
                 // 检测攻击图标是否可见和是否满足攻击条件
                 if (_attackIcon.Visible && APC.Inst.AttackCheck(friends, enemies))
                 {
+                    LG.AttackTeam = MM.Inst.HoveringUnit.Team;  // 为了方便就直接传入逻辑上敌方的阵营枚举
                     APC.Inst.StartAttack();
                 }
                 // 不能进攻就移动算子
                 else
                 {
+                    LG.GetMoveLog(MM.Inst.SelectedUnits[0], MM.Inst.SelectedUnits[0].Coor, mouseCoorPos, MM.Inst.SelectedUnits[0].Team);
                     OnSelectCoor(mouseCoorPos);
                 }
 
                 if (isHoveringCounter)
                 {
+                    LG.GetMoveLog(MM.Inst.SelectedUnits[0], MM.Inst.SelectedUnits[0].Coor, mouseCoorPos, MM.Inst.SelectedUnits[0].Team);
                     EnterAStack(mouseCoorPos);
                 }
             }

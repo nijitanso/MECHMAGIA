@@ -1,7 +1,7 @@
 using ActionProcessor;
 using Godot;
 using System;
-using static System.Net.Mime.MediaTypeNames;
+using LG = Generator.LogGenerator;
 
 public partial class PanelContainer1 : PanelContainer
 {
@@ -51,7 +51,10 @@ public partial class PanelContainer1 : PanelContainer
             _tween.Kill();
         }
 
-        _attackMessage.Text = GetText();
+        string text = GetText();
+        LG.GetAttackLog(text);
+
+        _attackMessage.Text = text;
         Modulate = new Color(1, 1, 1, 1);
 
         // 创建补间实例，实现动画效果

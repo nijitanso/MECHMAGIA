@@ -22,7 +22,7 @@ public partial class TurnLabel : Label
 
 	public void SetText()
     {
-		string nowTurn = TM.Inst.Turn.ToString();
+		int nowTurn = TM.Inst.Turn;
 
 		string text = $"第{nowTurn}回合";
 

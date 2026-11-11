@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Data;
 using Godot;
+using LG = Generator.LogGenerator;
 
 namespace ActionProcessor
 {
@@ -81,6 +82,11 @@ namespace ActionProcessor
             Attackers = friends.ToList();
             Defenders = enemies.ToList();
 
+            LG.Attackers = Attackers;
+            LG.Defenders = Defenders;
+
+
+
 
             // 双方的总点数，用float是因为需要小数除法
             float totalAP = 0;
@@ -101,7 +107,7 @@ namespace ActionProcessor
 
             if (ratio < 0.5) return false;  // 攻击/防御小于1/2则无法发起进攻
 
-            Ratio = (int)System.Math.Floor(ratio);
+            Ratio = (int)Math.Floor(ratio);
 
             return true;
         }

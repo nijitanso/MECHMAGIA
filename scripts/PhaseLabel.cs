@@ -2,6 +2,7 @@ using Godot;
 using System;
 using Data;
 using TM = Managers.TurnManager;
+using LG = Generator.LogGenerator;
 
 public partial class PhaseLabel : Label
 {
@@ -53,5 +54,7 @@ public partial class PhaseLabel : Label
         }
 
         Text = text;
+
+        LG.GetPhaseChangeLog(TM.Inst.Turn, text);
     }
 }
