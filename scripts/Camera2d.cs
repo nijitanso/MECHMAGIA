@@ -111,8 +111,10 @@ public partial class Camera2d : Camera2D
     /// 这个方法是Godot专门用来处理键盘、鼠标、手柄等输入的，在接收到操作系统的控件输入后会被调用，所有专门的硬件输入处理应当放在这个方法中实现以提高性能
     /// </summary>
     /// <param name="event"></param>
-    public override void _Input(InputEvent @event)
+    public override void _UnhandledInput(InputEvent @event)
     {
+        if (GetViewport().GuiGetHoveredControl() != null) return;
+
         //  这个if语句的条件是C#一个比较新的语法，叫做模式匹配（Pattern Matching），它的意思是如果 @event 是 InputEventMouseButton 类型的，返回true，并把它转换成 mouseEvent 变量，这样就可以直接使用 mouseEvent 的属性和方法了
         if (@event is InputEventMouseButton mouseEvent)
         {

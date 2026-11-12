@@ -10,6 +10,8 @@ public partial class ActionLog : RichTextLabel
         LG.ActionLog = this;    // 向 LogGenerator 注册 ActionLog 实例，方便在其他地方调用 AddLog 方法
 		BbcodeEnabled = true;
 
+        //MouseFilter = MouseFilterEnum.Stop;
+
 
     }
 

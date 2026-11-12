@@ -144,6 +144,7 @@ script = ExtResource("13_8cuns")
 offset_left = 1104.0
 offset_right = 1156.0
 offset_bottom = 448.0
+mouse_filter = 2
 theme_override_constants/separation = -373
 
 [node name="MarginContainer2" type="MarginContainer" parent="GUI/VBoxContainer" unique_id=2044366928]
@@ -196,6 +197,7 @@ offset_left = -56.0
 offset_right = 56.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="MarginContainer1" type="MarginContainer" parent="GUI/VBoxContainer1" unique_id=1973106273]
 layout_mode = 2
@@ -219,6 +221,7 @@ script = ExtResource("11_x4yfu")
 [node name="VBoxContainer2" type="VBoxContainer" parent="GUI" unique_id=934398731]
 offset_right = 208.0
 offset_bottom = 448.0
+mouse_filter = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="GUI/VBoxContainer2" unique_id=1149758107]
 custom_minimum_size = Vector2(50, 63.535)
@@ -239,6 +242,7 @@ anchor_bottom = 0.16000001
 offset_left = 920.0
 offset_bottom = -39.680008
 size_flags_horizontal = 0
+mouse_filter = 2
 alignment = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="GUI/HBoxContainer" unique_id=421674695]
@@ -292,6 +296,7 @@ script = ExtResource("16_ob58h")
 offset_top = 448.0
 offset_right = 1152.0
 offset_bottom = 648.0
+mouse_filter = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="GUI/HBoxContainer2" unique_id=227915381]
 custom_minimum_size = Vector2(300, 100)
