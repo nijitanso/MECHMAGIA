@@ -25,7 +25,7 @@
 [ext_resource type="Texture2D" uid="uid://cupogu0q6atd2" path="res://resource/GUI-ButtonHighlight.png" id="16_wosyn"]
 [ext_resource type="Script" uid="uid://bkqrbh3l201p6" path="res://scripts/UI/Button/ButtonHl.cs" id="17_wosyn"]
 [ext_resource type="Texture2D" uid="uid://dvod7vvpg7k3d" path="res://resource/GUI-AttackIcon.png" id="20_gjnlk"]
-[ext_resource type="Script" uid="uid://c7bdqi5hayngw" path="res://scene/ActionLog.cs" id="22_hmh3n"]
+[ext_resource type="Script" uid="uid://c7bdqi5hayngw" path="res://scripts/UI/ActionLog.cs" id="22_hmh3n"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_pnqar")
@@ -122,15 +122,7 @@ visible = false
 z_index = 5
 z_as_relative = false
 
-[node name="MouseClickTimeShower" type="Label" parent="." unique_id=2131793230]
-offset_left = 40.0
-offset_top = 64.0
-offset_right = 216.0
-offset_bottom = 95.0
-text = "鼠标左键被按下的时长："
-
 [node name="Camera2D" type="Camera2D" parent="." unique_id=397645248]
-position = Vector2(782, 499)
 zoom = Vector2(0.64, 0.64)
 script = ExtResource("8_ob58h")
 ZoomSpeed = 0.3

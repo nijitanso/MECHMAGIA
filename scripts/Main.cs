@@ -25,7 +25,7 @@ public partial class Main : Node2D
     {
         // 获取对节点的引用
         _counter = GD.Load<PackedScene>("res://scene/Counter.tscn");
-        _floatingDescription = GD.Load<PackedScene>("res://scene/FloatingDescription.tscn");
+        _floatingDescription = GD.Load<PackedScene>("res://scene/ToolTip.tscn");
         _friendUnits = GetNode<Node>("FriendUnits");
         _map = GetNode<Map>("Map");
         _gui = GetNode<Gui>("GUI");
@@ -58,7 +58,7 @@ public partial class Main : Node2D
     {
         InstantiateUnits();
 
-        FloatingDescription floatingDescription = _floatingDescription.Instantiate<FloatingDescription>();
+        ToolTip floatingDescription = _floatingDescription.Instantiate<ToolTip>();
         // 将FloatingDescription实例挂载到Gui节点下，这样描述描述的UI就是独立于摄像机的，大小不会改变
         _gui.AddChild(floatingDescription);
     }

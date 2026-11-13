@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://d2nluskbqqtxn"]
 
-[ext_resource type="Script" uid="uid://jd0rm6tyu5f6" path="res://scripts/FloatingDescription.cs" id="1_1jyuk"]
+[ext_resource type="Script" uid="uid://bg6627ma1osdl" path="res://scripts/ToolTip.cs" id="1_txsv3"]
 
-[node name="FloatingDescription" type="Control" unique_id=1707561731]
+[node name="ToolTip" type="Control" unique_id=1707561731]
 layout_mode = 3
 anchors_preset = 0
-script = ExtResource("1_1jyuk")
+script = ExtResource("1_txsv3")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=547859140]
 layout_mode = 0

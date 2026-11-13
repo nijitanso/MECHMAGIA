@@ -85,5 +85,27 @@ namespace Generator
         }
 
     }
+
+    public static partial class ToolTipGenerator
+    {
+        public static string TooltipText { get; set; }
+
+        public static void GetUnitToolTip(UnitInfo unit)
+        {
+            string tooltip = $"单位ID：{unit.ID}\n" +
+                             $"单位攻击力：{unit.AP}\n" +
+                             $"单位防御力：{unit.DP}\n" +
+                             $"单位移动力：{unit.MP}\n";
+
+            TooltipText =  tooltip;
+        }
+
+        public static void GetMapToolTip(Vector2I coor)
+        {
+            string tooltip = $"地格坐标：{coor}\n";
+
+            TooltipText = tooltip;
+        }
+    }
 }
 

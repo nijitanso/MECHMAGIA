@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using APC = ActionProcessor.AttackProcessor;
 using MM = Managers.MouseManager;
 using LG = Generator.LogGenerator;
+using TTG = Generator.ToolTipGenerator;
 
 public partial class Map : TileMapLayer
 {
@@ -686,6 +687,7 @@ public partial class Map : TileMapLayer
             // 判断从MouseManager类中的状态枚举来区分鼠标是悬停在地格上还是算子上，这段if语句是独立的判断算子悬停高亮的逻辑
             if (IsHoveringCounter)
             {
+                TTG.GetUnitToolTip(MM.Inst.HoveringUnit);   // 获取鼠标悬停算子的提示信息
 
                 // 若此前有被高亮的地格则取消该地格的高亮
                 if (_isAnyCellHighlight)
@@ -696,6 +698,7 @@ public partial class Map : TileMapLayer
             else if (!_isAnyCellHighlight && !MM.Inst.IsStackHovered)
             {
                 EnterCell(mouseCoorPos);
+                TTG.GetMapToolTip(mouseCoorPos);   // 获取鼠标悬停地格的提示信息
             }
 
             //GD.Print(MM.Inst.IsStackHovered);
@@ -703,6 +706,7 @@ public partial class Map : TileMapLayer
             if (mouseCoorPos != PreciousCell && !IsHoveringCounter && !MM.Inst.IsStackHovered)
             {
                 EnterCell(mouseCoorPos);
+                TTG.GetMapToolTip(mouseCoorPos);   // 获取鼠标悬停地格的提示信息
 
                 // 判断鼠标是否从地图边缘进入，若是则不用取消上一个高亮的地格（因为根本没有）（说实话这段逻辑有点蠢，不过能用就用也不想改了）
                 if (PreciousCell != new Vector2I(-999, -999))

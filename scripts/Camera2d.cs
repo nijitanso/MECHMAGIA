@@ -56,6 +56,7 @@ public partial class Camera2d : Camera2D
     {
 
         Vector2 viewportSize = _viwport.GetVisibleRect().Size;
+        
 
         //  如果视口大小发生变化或者缩放发生变化，则重新计算摄像机的大小（计算要用的理论值）
         if (viewportSize != _pViewportSize || Zoom != _newZoom)
@@ -106,6 +107,20 @@ public partial class Camera2d : Camera2D
         Zoom = new Vector2(Math.Clamp(Zoom.X, MinZoom.X, MaxZoom.X), Math.Clamp(Zoom.Y, MinZoom.Y, MaxZoom.Y));
 
     }
+/*
+    public override void _Input(InputEvent @event)
+    {
+        if (@event is InputEventMouseButton mouseEvent)
+        {
+            // 判断左键时是否悬停在地图上
+            if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed)
+            {
+                GD.Print($"摄像机大小：{_cameraSizeX}, {_cameraSizeY}");
+                GD.Print(GetGlobalMousePosition());
+            }
+        }
+    }
+*/
 
     /// <summary>
     /// 这个方法是Godot专门用来处理键盘、鼠标、手柄等输入的，在接收到操作系统的控件输入后会被调用，所有专门的硬件输入处理应当放在这个方法中实现以提高性能
