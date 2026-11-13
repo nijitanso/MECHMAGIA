@@ -203,7 +203,6 @@ namespace Managers
         private readonly UnitInfo _nullUnit = new UnitInfo() { ID = -1 };    // 私有字段用来储存没有悬停在算子上时HoveringUnit所引用的对象
 
         // 对节点的引用
-        private Label mouseClickTimeShower;
         private Map _map;
         // Called when the node enters the scene tree for the first time.
 
@@ -222,16 +221,7 @@ namespace Managers
         /// </summary>
         private void InitializeNode()
         {
-            mouseClickTimeShower = GetNode<Label>("/root/Main/MouseClickTimeShower");
             _map = GetNode<Map>("/root/Main/Map");
-            if (mouseClickTimeShower == null)
-            {
-                GD.PrintErr("没有找到 MouseClickTimeShower 节点！");
-            }
-            else
-            {
-                mouseClickTimeShower.Text = "找到MouseClickTimeShower 节点！";
-            }
         }
 
         // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -261,9 +251,6 @@ namespace Managers
                     MouseLeftHoldingTime = 0;
                 }
             }
-
-            if (mouseClickTimeShower != null)
-                mouseClickTimeShower.Text = $"鼠标左键按下时长：{MouseLeftHoldingTime:F2}";
 
 
         }

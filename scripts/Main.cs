@@ -13,7 +13,6 @@ public partial class Main : Node2D
     // 对节点的引用
     private PackedScene _counter;
     private PackedScene _floatingDescription;
-    private Node _friendUnits;
     private Map _map;
     private Gui _gui;
     private UndoButton _undoButton;
@@ -26,7 +25,6 @@ public partial class Main : Node2D
         // 获取对节点的引用
         _counter = GD.Load<PackedScene>("res://scene/Counter.tscn");
         _floatingDescription = GD.Load<PackedScene>("res://scene/ToolTip.tscn");
-        _friendUnits = GetNode<Node>("FriendUnits");
         _map = GetNode<Map>("Map");
         _gui = GetNode<Gui>("GUI");
         _undoButton = _gui.GetNode<UndoButton>("VBoxContainer/MarginContainer2/UndoButton");

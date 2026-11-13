@@ -26,6 +26,9 @@
 [ext_resource type="Script" uid="uid://bkqrbh3l201p6" path="res://scripts/UI/Button/ButtonHl.cs" id="17_wosyn"]
 [ext_resource type="Texture2D" uid="uid://dvod7vvpg7k3d" path="res://resource/GUI-AttackIcon.png" id="20_gjnlk"]
 [ext_resource type="Script" uid="uid://c7bdqi5hayngw" path="res://scripts/UI/ActionLog.cs" id="22_hmh3n"]
+[ext_resource type="Texture2D" uid="uid://r7e0vrjbw11a" path="res://resource/pause-menu.png" id="22_tgqhd"]
+[ext_resource type="Script" uid="uid://dgg4on1g3yxqi" path="res://scripts/PauseIcon.cs" id="23_puvaq"]
+[ext_resource type="Script" uid="uid://cbwhsgaheqwlr" path="res://scripts/Menu.cs" id="29_lcaa3"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dbls1"]
 texture = ExtResource("1_pnqar")
@@ -92,6 +95,10 @@ sources/0 = SubResource("TileSetAtlasSource_tuai4")
 
 [sub_resource type="LabelSettings" id="LabelSettings_llu5k"]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_gk6v8"]
+atlas = ExtResource("22_tgqhd")
+region = Rect2(0, 0, 32, 32)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_ob58h"]
 atlas = ExtResource("15_tuai4")
 region = Rect2(0, 0, 32, 32)
@@ -127,7 +134,8 @@ zoom = Vector2(0.64, 0.64)
 script = ExtResource("8_ob58h")
 ZoomSpeed = 0.3
 
-[node name="FriendUnits" type="Node" parent="." unique_id=2135904185]
+[node name="Menu" type="CanvasLayer" parent="." unique_id=1649311258]
+script = ExtResource("29_lcaa3")
 
 [node name="GUI" type="CanvasLayer" parent="." unique_id=353398706]
 script = ExtResource("13_8cuns")
@@ -214,6 +222,17 @@ script = ExtResource("11_x4yfu")
 offset_right = 208.0
 offset_bottom = 448.0
 mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="GUI/VBoxContainer2" unique_id=1211916812]
+custom_minimum_size = Vector2(0, 63.23)
+layout_mode = 2
+theme_override_constants/margin_right = 144
+
+[node name="PauseIcon" type="TextureRect" parent="GUI/VBoxContainer2/MarginContainer" unique_id=653213507]
+layout_mode = 2
+mouse_filter = 0
+texture = SubResource("AtlasTexture_gk6v8")
+script = ExtResource("23_puvaq")
 
 [node name="PanelContainer" type="PanelContainer" parent="GUI/VBoxContainer2" unique_id=1149758107]
 custom_minimum_size = Vector2(50, 63.535)
