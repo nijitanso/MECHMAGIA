@@ -1,5 +1,6 @@
 ---
 persons: nijitanso、Amagi Shigeki
+author: nijitanso
 ---
 ![[map-design.jpg]]
 >图一：会议的白板内容
